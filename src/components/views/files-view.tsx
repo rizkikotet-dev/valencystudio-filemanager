@@ -1622,12 +1622,16 @@ function GalleryTile({
             <button data-tile-action onClick={h.onPreview} title="Preview" className="size-7 rounded-md grid place-items-center backdrop-blur bg-background/60 text-white/90 hover:text-amber-400 cursor-pointer">
               <Eye className="size-3.5" />
             </button>
-            <button data-tile-action onClick={h.onDownload} title="Download" className="size-7 rounded-md grid place-items-center backdrop-blur bg-background/60 text-white/90 hover:text-amber-400 cursor-pointer">
-              <Download className="size-3.5" />
-            </button>
-            <button data-tile-action onClick={h.onShare} title="Share settings" className="size-7 rounded-md grid place-items-center backdrop-blur bg-background/60 text-white/90 hover:text-amber-400 cursor-pointer">
-              <Share2 className="size-3.5" />
-            </button>
+            {ready && (
+              <>
+                <button data-tile-action onClick={h.onDownload} title="Download" className="size-7 rounded-md grid place-items-center backdrop-blur bg-background/60 text-white/90 hover:text-amber-400 cursor-pointer">
+                  <Download className="size-3.5" />
+                </button>
+                <button data-tile-action onClick={h.onShare} title="Share settings" className="size-7 rounded-md grid place-items-center backdrop-blur bg-background/60 text-white/90 hover:text-amber-400 cursor-pointer">
+                  <Share2 className="size-3.5" />
+                </button>
+              </>
+            )}
           </>
         )}
       </div>
@@ -2030,7 +2034,7 @@ function GridCard({
           </Badge>
         )}
       </div>
-      {mode !== 'trash' && (
+      {mode !== 'trash' && file.status === 'READY' && (
         <div className="mt-3 flex gap-1.5 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
           <Button size="sm" variant="outline" className="h-7 text-xs gap-1 flex-1" onClick={h.onDownload}>
             <Download className="size-3" /> Download
@@ -2180,9 +2184,11 @@ function ActionsMenu({ file, mode, ...h }: { file: FileRow; mode: FilesMode } & 
             <DropdownMenuItem onClick={h.onPreview}>
               <Eye className="size-4" /> Preview
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={h.onDownload}>
-              <Download className="size-4" /> Download
-            </DropdownMenuItem>
+            {file.status === 'READY' && (
+              <DropdownMenuItem onClick={h.onDownload}>
+                <Download className="size-4" /> Download
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={h.onRename}>
               <Pencil className="size-4" /> Rename
             </DropdownMenuItem>

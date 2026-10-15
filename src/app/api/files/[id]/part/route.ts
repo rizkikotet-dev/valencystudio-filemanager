@@ -68,11 +68,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (!fresh) throw new Error('File vanished')
     let parts: StoredPart[] = []
     try { parts = JSON.parse(fresh.parts || '[]') } catch {}
-    if (parts[index]) return { duplicate: true, count: parts.length }
+    if (parts[index]?.ref) return { duplicate: true, count: parts.filter(p => p?.ref).length }
     while (parts.length < index) parts.push({ ref: '', size: 0 }) // keep indexes aligned
     parts[index] = part
     await db.file.update({ where: { id }, data: { parts: JSON.stringify(parts) } })
-    return { duplicate: false, count: parts.length }
+    return { duplicate: false, count: parts.filter(p => p?.ref).length }
   })
 
   return Response.json({ ok: true, index, received: result.count, total: expectedTotal, duplicate: result.duplicate })

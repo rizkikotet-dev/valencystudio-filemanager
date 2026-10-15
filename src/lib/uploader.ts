@@ -154,34 +154,53 @@ async function processFile(key: string) {
   try {
     update(key, { status: 'initializing' })
     const folderId = folderTargets.get(key) ?? null
-    const init = await fetch('/api/files/init', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: file.name, size: file.size, mimeType: file.type || 'application/octet-stream', folderId }),
-      signal: controller.signal,
-    }).then(async r => {
-      const body = await r.json().catch(() => ({}))
-      if (!r.ok) throw new Error(body.error || `Init failed (${r.status})`)
-      return body as { id: string; partSize: number; duplicate?: boolean }
-    })
-
-    if (init.duplicate) {
-      toast.warning(`"${file.name}" already exists in this folder`, {
-        description: 'Uploading a duplicate copy anyway — cancel from the upload panel if this was unintentional.',
-        duration: 7000,
-      })
+    // resume reuse: retry() keeps item.fileId — reuse the same PENDING row
+    // so already-uploaded parts are kept instead of orphaned by a fresh init
+    let fileId = item.fileId
+    let partSize = 16 * 1024 * 1024
+    if (fileId) {
+      try {
+        const check = await fetch(`/api/files/${fileId}/part`, { signal: controller.signal }).then(r => (r.ok ? r.json() : null))
+        if (!check || check.status === undefined) {
+          fileId = undefined // row gone (swept/deleted) — fall through to fresh init
+        }
+      } catch {
+        fileId = undefined
+      }
     }
+    if (!fileId) {
+      const init = await fetch('/api/files/init', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: file.name, size: file.size, mimeType: file.type || 'application/octet-stream', folderId }),
+        signal: controller.signal,
+      }).then(async r => {
+        const body = await r.json().catch(() => ({}))
+        if (!r.ok) throw new Error(body.error || `Init failed (${r.status})`)
+        return body as { id: string; partSize: number; duplicate?: boolean }
+      })
 
-    const partSize = init.partSize || 16 * 1024 * 1024
+      if (init.duplicate) {
+        toast.warning(`"${file.name}" already exists in this folder`, {
+          description: 'Uploading a duplicate copy anyway — cancel from the upload panel if this was unintentional.',
+          duration: 7000,
+        })
+      }
+
+      partSize = init.partSize || 16 * 1024 * 1024
+      fileId = init.id
+      update(key, { fileId })
+    }
+    const activeId = fileId as string
     const totalParts = file.size === 0 ? 0 : Math.ceil(file.size / partSize)
-    update(key, { fileId: init.id, totalParts, status: 'uploading' })
+    update(key, { fileId: activeId, totalParts, status: 'uploading' })
     for (let i = 0; i < totalParts; i++) setPartProgress(key, i, 0)
 
     // resume support
     let done = new Set<number>()
     if (totalParts > 0) {
       try {
-        const resume = await fetch(`/api/files/${init.id}/part`, { signal: controller.signal }).then(r => (r.ok ? r.json() : null))
+        const resume = await fetch(`/api/files/${activeId}/part`, { signal: controller.signal }).then(r => (r.ok ? r.json() : null))
         if (resume?.done) done = new Set<number>(resume.done)
         done.forEach(i => setPartProgress(key, i, 1))
       } catch {}
@@ -198,7 +217,7 @@ async function processFile(key: string) {
         const start = index * partSize
         const blob = file.slice(start, Math.min(start + partSize, file.size))
         try {
-          await xhrUploadPart(key, init.id, blob, index, controller.signal)
+          await xhrUploadPart(key, activeId, blob, index, controller.signal)
         } catch (err: any) {
           if (err?.name === 'AbortError') return
           lastErr = err
@@ -211,7 +230,7 @@ async function processFile(key: string) {
     if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError')
 
     update(key, { status: 'finalizing', progress: 1 })
-    const completeRes = await fetch(`/api/files/${init.id}/complete`, {
+    const completeRes = await fetch(`/api/files/${activeId}/complete`, {
       method: 'POST',
       signal: controller.signal,
     }).then(async r => {

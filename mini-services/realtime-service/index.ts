@@ -20,13 +20,18 @@
  *   slug:<slug> — visitors of a public share page
  */
 import { createServer } from 'http'
+import { join, isAbsolute } from 'path'
 import { Server } from 'socket.io'
 import { Database } from 'bun:sqlite'
 
 const PORT = 3003 // browser-facing socket.io endpoint (via gateway ?XTransformPort=3003)
 const INTERNAL_PORT = 3004 // loopback-only broadcast API for the Next.js server
 const INTERNAL_KEY = process.env.REALTIME_INTERNAL_KEY || 'vs-internal-key'
-const DB_PATH = process.env.REALTIME_DB_PATH || 'db/custom.db'
+const DB_PATH = process.env.REALTIME_DB_PATH
+  ? isAbsolute(process.env.REALTIME_DB_PATH)
+    ? process.env.REALTIME_DB_PATH
+    : join(process.cwd(), process.env.REALTIME_DB_PATH)
+  : join(import.meta.dir, '../../db/custom.db')
 
 interface BroadcastBody {
   domains: string[]
