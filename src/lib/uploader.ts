@@ -143,6 +143,71 @@ function xhrUploadPart(key: string, fileId: string, blob: Blob, index: number, s
   })
 }
 
+function xhrUploadStream(
+  key: string,
+  file: File,
+  folderId: string | null,
+  signal: AbortSignal
+): Promise<{ id: string; name: string; size: number }> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', '/api/files/upload-stream')
+    xhr.responseType = 'json'
+    xhr.setRequestHeader('X-File-Name', encodeURIComponent(file.name))
+    xhr.setRequestHeader('X-File-Size', String(file.size))
+    if (folderId) xhr.setRequestHeader('X-Folder-Id', folderId)
+    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream')
+
+    let lastLoaded = 0
+    let lastTs = Date.now()
+    let speedEma = 0
+
+    xhr.upload.onprogress = e => {
+      const now = Date.now()
+      const dt = (now - lastTs) / 1000
+      if (dt > 0.2) {
+        const inst = (e.loaded - lastLoaded) / dt
+        speedEma = speedEma === 0 ? inst : speedEma * 0.7 + inst * 0.3
+        lastLoaded = e.loaded
+        lastTs = now
+        update(key, { speed: speedEma })
+      }
+      const progress = e.total > 0 ? Math.min(0.999, e.loaded / e.total) : 0
+      update(key, { progress, uploadedParts: 1, totalParts: 1 })
+    }
+
+    const onAbort = () => {
+      xhr.abort()
+    }
+    signal.addEventListener('abort', onAbort)
+
+    xhr.onload = () => {
+      signal.removeEventListener('abort', onAbort)
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const res = xhr.response?.file || xhr.response
+        update(key, { progress: 1 })
+        resolve(res)
+      } else {
+        let msg = `Upload failed (HTTP ${xhr.status})`
+        try {
+          const body = xhr.response || (xhr.responseText ? JSON.parse(xhr.responseText) : null)
+          if (body?.error) msg = body.error
+        } catch {}
+        reject(new Error(msg))
+      }
+    }
+    xhr.onerror = () => {
+      signal.removeEventListener('abort', onAbort)
+      reject(new Error('Network error during upload'))
+    }
+    xhr.onabort = () => {
+      signal.removeEventListener('abort', onAbort)
+      reject(new DOMException('Aborted', 'AbortError'))
+    }
+    xhr.send(file)
+  })
+}
+
 async function processFile(key: string) {
   const file = files.get(key)
   const item = readStore().items.find(i => i.key === key)
@@ -152,8 +217,27 @@ async function processFile(key: string) {
   partProgress.set(key, new Map())
 
   try {
-    update(key, { status: 'initializing' })
     const folderId = folderTargets.get(key) ?? null
+
+    // Try direct Telethon streaming upload first if this is not a resume
+    if (!item.fileId) {
+      update(key, { status: 'uploading', totalParts: 1, uploadedParts: 0, progress: 0 })
+      try {
+        const streamRes = await xhrUploadStream(key, file, folderId, controller.signal)
+        update(key, { status: 'done', progress: 1, speed: 0, fileId: streamRes.id })
+        onFinished?.(readStore().items.find(i => i.key === key)!)
+        return
+      } catch (streamErr: any) {
+        if (streamErr?.name === 'AbortError') throw streamErr
+        const msg = streamErr?.message || ''
+        if (msg.includes('413') || msg.includes('quota') || msg.includes('exceeds') || msg.includes('Quota')) {
+          throw streamErr
+        }
+        console.warn('[uploader] Telethon streaming upload failed, trying chunked upload:', msg)
+      }
+    }
+
+    update(key, { status: 'initializing' })
     // resume reuse: retry() keeps item.fileId — reuse the same PENDING row
     // so already-uploaded parts are kept instead of orphaned by a fresh init
     let fileId = item.fileId
