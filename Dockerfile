@@ -36,6 +36,14 @@ RUN cd mini-services/realtime-service && bun install --frozen-lockfile
 # generate Prisma Client + engine linux (debian/openssl-3) secara eksplisit.
 RUN bunx prisma generate
 
+# Python 3 + venv untuk telethon-core microservice
+RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-pip python3-venv \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY mini-services/telethon-core/requirements.txt ./mini-services/telethon-core/
+RUN python3 -m venv /app/mini-services/telethon-core/.venv \
+ && /app/mini-services/telethon-core/.venv/bin/pip install --no-cache-dir -r ./mini-services/telethon-core/requirements.txt
+
 # ─────────────────────────────── builder ────────────────────────────────────
 FROM oven/bun:1 AS builder
 WORKDIR /app
@@ -76,6 +84,10 @@ RUN bun install --frozen-lockfile --production \
 FROM oven/bun:1 AS runner
 WORKDIR /app
 
+# Python runtime untuk telethon-core microservice
+RUN apt-get update && apt-get install -y --no-install-recommends python3 \
+ && rm -rf /var/lib/apt/lists/*
+
 # User non-root deterministik
 RUN useradd --uid 1001 --create-home --shell /bin/sh valency
 
@@ -87,7 +99,9 @@ ENV NODE_ENV=production \
     DATABASE_URL="file:/app/db/custom.db" \
     REALTIME_DB_PATH="/app/db/custom.db" \
     REALTIME_URL="http://127.0.0.1:3004" \
-    REALTIME_INTERNAL_KEY="vs-internal-key"
+    REALTIME_INTERNAL_KEY="vs-internal-key" \
+    TELETHON_CORE_URL="http://127.0.0.1:3005" \
+    TELETHON_INTERNAL_KEY="vs-telethon-internal-key"
 
 # Server standalone (server.js + .next + static + public + traced node_modules)
 COPY --from=builder --chown=valency:valency /app/.next/standalone ./
@@ -100,6 +114,10 @@ COPY --chown=valency:valency prisma ./prisma
 
 # Realtime fan-out service (socket.io) — node_modules mandiri
 COPY --from=deps --chown=valency:valency /app/mini-services/realtime-service ./mini-services/realtime-service
+
+# Telethon Core microservice (MTProto direct streaming) — venv + source code
+COPY --from=deps --chown=valency:valency /app/mini-services/telethon-core/.venv ./mini-services/telethon-core/.venv
+COPY --chown=valency:valency mini-services/telethon-core ./mini-services/telethon-core
 
 # Entrypoint (chmod + guard CRLF untuk editor Windows)
 COPY docker/entrypoint.sh ./docker/entrypoint.sh

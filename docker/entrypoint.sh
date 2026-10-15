@@ -20,6 +20,25 @@ echo "[valency] sinkronisasi skema database…"
 # akan menggagalkan start secara eksplisit (bisa diperiksa manual).
 bunx prisma db push --skip-generate --schema /app/prisma/schema.prisma
 
+echo "[valency] menyalakan telethon core service (loopback :3005)…"
+(
+  cd /app/mini-services/telethon-core
+  while true; do
+    /app/mini-services/telethon-core/.venv/bin/python main.py \
+      || echo "[valency] telethon core berhenti — restart dalam 3 detik…"
+    sleep 3
+  done
+) &
+
+# Tunggu telethon core siap
+for i in $(seq 1 15); do
+  if bun -e "const r = await fetch('http://127.0.0.1:3005/health').catch(()=>null); process.exit(r && r.ok ? 0 : 1)" 2>/dev/null; then
+    echo "[valency] telethon core siap."
+    break
+  fi
+  sleep 1
+done
+
 echo "[valency] menyalakan realtime fan-out service (loopback :3003)…"
 (
   while true; do
