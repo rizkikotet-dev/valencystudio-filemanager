@@ -14,6 +14,8 @@ export interface AppSettings {
   tgApiHash: string
   tgAdminIds: string
   tgStorageChatId: string
+  telethonCoreUrl: string
+  telethonInternalKey: string
 }
 
 const DEFAULTS: Record<string, string> = {
@@ -22,13 +24,15 @@ const DEFAULTS: Record<string, string> = {
   announcement: '',
   allowRegistration: 'true',
   defaultQuota: String(1 * 1024 * 1024 * 1024),
-  maxFileSize: String(2 * 1024 * 1024 * 1024),
+  maxFileSize: String(2_000_000_000), // Strict 2,000,000,000 bytes
   storageBackend: 'telegram',
   tgBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
-  tgApiId: process.env.TELEGRAM_API_ID || '',
-  tgApiHash: process.env.TELEGRAM_API_HASH || '',
+  tgApiId: process.env.TELEGRAM_API_ID || process.env.TELETHON_API_ID || '',
+  tgApiHash: process.env.TELEGRAM_API_HASH || process.env.TELETHON_API_HASH || '',
   tgAdminIds: process.env.TELEGRAM_ADMIN_IDS || '',
-  tgStorageChatId: process.env.TELEGRAM_STORAGE_CHAT_ID || '',
+  tgStorageChatId: process.env.TELEGRAM_STORAGE_CHAT_ID || process.env.TELETHON_STORAGE_CHAT_ID || '',
+  telethonCoreUrl: process.env.TELETHON_CORE_URL || 'http://127.0.0.1:3005',
+  telethonInternalKey: process.env.TELETHON_INTERNAL_KEY || 'vs-telethon-internal-key',
 }
 
 export const SECRET_KEYS = ['tgBotToken', 'tgApiHash', 'jwtSecret', 'sharePasswordSalt']
@@ -56,13 +60,15 @@ export async function getSettings(): Promise<AppSettings> {
     announcement: raw.announcement || '',
     allowRegistration: raw.allowRegistration === 'true',
     defaultQuota: parseInt(raw.defaultQuota) || 1073741824,
-    maxFileSize: parseInt(raw.maxFileSize) || 2147483647,
+    maxFileSize: Math.min(parseInt(raw.maxFileSize) || 2000000000, 2000000000),
     storageBackend: (raw.storageBackend === 'local' ? 'local' : 'telegram') as AppSettings['storageBackend'],
     tgBotToken: raw.tgBotToken || '',
     tgApiId: raw.tgApiId || '',
     tgApiHash: raw.tgApiHash || '',
     tgAdminIds: raw.tgAdminIds || '',
     tgStorageChatId: raw.tgStorageChatId || '',
+    telethonCoreUrl: raw.telethonCoreUrl || 'http://127.0.0.1:3005',
+    telethonInternalKey: raw.telethonInternalKey || 'vs-telethon-internal-key',
   }
 }
 
