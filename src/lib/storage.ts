@@ -1,5 +1,6 @@
 import { getSettings } from '@/lib/settings'
 import { deleteTelegramMessage, getTelegramFileUrl, uploadPartToTelegram } from '@/lib/telegram'
+import { deleteFromTelethon } from '@/lib/telethon'
 import type { PartMeta } from '@/lib/telegram-captions'
 import { mkdir, readFile, unlink, writeFile } from 'fs/promises'
 import path from 'path'
@@ -97,7 +98,12 @@ export async function readPartBuffer(ref: string): Promise<Buffer> {
 export async function deletePart(ref: string): Promise<void> {
   cacheInvalidate(ref)
   try {
-    if (ref.startsWith('tg:')) {
+    if (ref.startsWith('telethon:')) {
+      const msgId = parseInt(ref.slice('telethon:'.length))
+      if (!isNaN(msgId)) {
+        await deleteFromTelethon(msgId)
+      }
+    } else if (ref.startsWith('tg:')) {
       const p = tgRefParts(ref)
       const settings = await getSettings()
       if (p && p.messageId && settings.tgStorageChatId) {

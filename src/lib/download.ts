@@ -1,4 +1,5 @@
 import { readPartBuffer } from '@/lib/storage'
+import { streamFromTelethon } from '@/lib/telethon'
 import { Readable } from 'stream'
 
 export interface FileMeta {
@@ -76,6 +77,51 @@ export async function buildFileResponse(req: Request, file: FileMeta, mode: 'att
 
   if (total === 0) {
     return new Response(new Uint8Array(0), { status: 200, headers: { ...baseHeaders, 'Content-Length': '0' } })
+  }
+
+  // Direct streaming route for Telethon-stored single documents
+  if (parts.length === 1 && parts[0]?.ref?.startsWith('telethon:')) {
+    const messageId = parseInt(parts[0].ref.slice('telethon:'.length))
+    const rangeHeader = req.headers.get('range')
+    if (rangeHeader) {
+      const m = /bytes=(\d*)-(\d*)/.exec(rangeHeader)
+      if (m && (m[1] !== '' || m[2] !== '')) {
+        let start: number
+        let end: number
+        if (m[1] === '') {
+          const suffix = parseInt(m[2])
+          start = Math.max(0, total - suffix)
+          end = total - 1
+        } else {
+          start = parseInt(m[1])
+          end = m[2] === '' ? total - 1 : Math.min(parseInt(m[2]), total - 1)
+        }
+        if (start > end || start >= total) {
+          return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${total}` } })
+        }
+        const telethonRes = await streamFromTelethon(messageId, `bytes=${start}-${end}`)
+        if (!telethonRes.ok || !telethonRes.body) {
+          return new Response('Telethon download failed', { status: telethonRes.status || 500 })
+        }
+        return new Response(telethonRes.body, {
+          status: 206,
+          headers: {
+            ...baseHeaders,
+            'Content-Range': `bytes ${start}-${end}/${total}`,
+            'Content-Length': String(end - start + 1),
+          },
+        })
+      }
+    }
+
+    const telethonRes = await streamFromTelethon(messageId)
+    if (!telethonRes.ok || !telethonRes.body) {
+      return new Response('Telethon download failed', { status: telethonRes.status || 500 })
+    }
+    return new Response(telethonRes.body, {
+      status: 200,
+      headers: { ...baseHeaders, 'Content-Length': String(total) },
+    })
   }
 
   const rangeHeader = req.headers.get('range')
