@@ -43,7 +43,7 @@ def get_settings() -> Settings:
         max_upload_bytes = 2_000_000_000
 
     try:
-        port = int(os.getenv("PORT", "3005"))
+        port = int(os.getenv("TELETHON_PORT", os.getenv("TELETHON_CORE_PORT", "3005")))
     except ValueError:
         port = 3005
 

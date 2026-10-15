@@ -10,6 +10,7 @@ class TestConfig(unittest.TestCase):
         "TELETHON_STORAGE_CHAT_ID": "-100123456789",
         "TELETHON_INTERNAL_KEY": "test-key-123",
         "MAX_UPLOAD_BYTES": "2000000000",
+        "PORT": "3000",  # Next.js app port must not conflict with Telethon Core
     })
     def test_valid_config(self):
         from config import get_settings
