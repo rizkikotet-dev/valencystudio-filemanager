@@ -4,9 +4,10 @@
 # ValencyStudio File Manager — production image
 #
 # Multi-stage (Bun runtime):
-#   deps    : install dependensi root + realtime-service + prisma generate
-#   builder : next build (standalone — static & public digabung otomatis)
-#   runner  : image akhir non-root — Next.js :3000 + realtime fan-out :3003
+#   deps      : install dependensi root + realtime-service + prisma generate
+#   builder   : next build (standalone — static & public digabung otomatis)
+#   deps-prod : node_modules production-only + prisma generate (untuk runner)
+#   runner    : image akhir non-root — Next.js :3000 + realtime fan-out :3003
 #
 # State disimpan di dua volume:
 #   /app/db       → SQLite (DATABASE_URL=file:/app/db/custom.db)
@@ -56,6 +57,21 @@ ENV DATABASE_URL="file:/tmp/build.db" \
 # (didefinisikan pada script "build" di package.json)
 RUN bun run build
 
+# ────────────────────────────── deps-prod ───────────────────────────────────
+# Production-only node_modules untuk runner (app + prisma CLI + client engine).
+# Runner TIDAK BOLEH cherry-pick subfolder node_modules (mis. hanya @prisma/ —
+# prisma CLI butuh dependensi transitif seperti `effect` via @prisma/config,
+# dan daftarnya bisa berubah tiap rilis Prisma). Full production set = superset
+# yang stabil; devDependencies (typescript, eslint, …) tetap dikecualikan.
+FROM oven/bun:1 AS deps-prod
+WORKDIR /app
+
+COPY package.json bun.lock ./
+COPY prisma ./prisma
+
+RUN bun install --frozen-lockfile --production \
+ && bunx prisma generate
+
 # ─────────────────────────────── runner ─────────────────────────────────────
 FROM oven/bun:1 AS runner
 WORKDIR /app
@@ -73,14 +89,13 @@ ENV NODE_ENV=production \
     REALTIME_URL="http://127.0.0.1:3004" \
     REALTIME_INTERNAL_KEY="vs-internal-key"
 
-# Server standalone (server.js + .next + static + public + node_modules hasil tracing)
+# Server standalone (server.js + .next + static + public + traced node_modules)
 COPY --from=builder --chown=valency:valency /app/.next/standalone ./
 
-# Prisma CLI + client + engine — untuk `db push` zero-touch saat container start
-COPY --from=deps --chown=valency:valency /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=deps --chown=valency:valency /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=deps --chown=valency:valency /app/node_modules/prisma  ./node_modules/prisma
-COPY --from=deps --chown=valency:valency /app/node_modules/.bin    ./node_modules/.bin
+# Full production node_modules MENIMPA traced subset (superset: app runtime +
+# prisma CLI + effect + client engine). Prisma CLI + client + engine — untuk
+# `db push` zero-touch saat container start.
+COPY --from=deps-prod --chown=valency:valency /app/node_modules ./node_modules
 COPY --chown=valency:valency prisma ./prisma
 
 # Realtime fan-out service (socket.io) — node_modules mandiri
