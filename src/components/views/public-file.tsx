@@ -30,6 +30,7 @@ import {
   Gauge,
   DownloadCloud,
   LockOpen,
+  ShieldCheck,
 } from 'lucide-react'
 import { RealtimeBadge } from '@/components/realtime-badge'
 
@@ -201,7 +202,7 @@ export function PublicFileView({ slug }: { slug: string }) {
       <header className="h-14 shrink-0 flex items-center justify-between px-4 sm:px-6 border-b border-border/60">
         <button onClick={() => { window.location.hash = '/' }} className="cursor-pointer"><Logo /></button>
         <span className="hidden sm:flex items-center gap-1.5 micro-label">
-          <Send className="size-3 text-amber-500" /> Stored on Telegram
+          <ShieldCheck className="size-3 text-emerald-500" /> Secure Cloud Vault
         </span>
         <span className="sm:hidden flex-1" />
         <RealtimeBadge />
@@ -324,7 +325,7 @@ export function PublicFileView({ slug }: { slug: string }) {
 
               <div className="p-6 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-xs text-muted-foreground font-mono text-[11px]">
-                  Shared via ValencyStudio · Telethon MTProto Engine
+                  Shared via ValencyStudio · Encrypted Cloud Vault
                 </p>
                 <Button size="lg" className="gap-2" onClick={() => downloadFile(`/api/share/${slug}/download`)}>
                   <Download className="size-4.5" strokeWidth={1.9} /> Download file

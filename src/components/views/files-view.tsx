@@ -1072,7 +1072,7 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
                     ? 'Star your important files to pin them here for quick access. Press “s” on any focused file, or use the card menu.'
                   : inFolder
                     ? 'Drop files anywhere on the page to upload into this folder, or create a subfolder to stay organized.'
-                    : 'Drag & drop files anywhere, or hit the Upload button to store your first file on Telegram. Create folders to keep things tidy.'}
+                    : 'Drag & drop files anywhere, or hit the Upload button to store your first file in the cloud vault. Create folders to keep things tidy.'}
             </p>
             {mode === 'files' && (
               <div className="mt-5 flex items-center justify-center gap-2 flex-wrap">
@@ -1328,7 +1328,7 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {mode === 'trash'
-                ? 'This permanently removes the file from Telegram storage. This action cannot be undone.'
+                ? 'This permanently removes the file from the cloud vault. This action cannot be undone.'
                 : 'Trashed files are kept for 30 days, then purged automatically. Share links are disabled while trashed.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -1348,7 +1348,7 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
               Permanently delete {confirmPurge instanceof Array ? `${confirmPurge.length} files` : `“${(confirmPurge as FileRow)?.name}”`}?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This removes the file(s) from Telegram storage forever. This action cannot be undone.
+              This removes the file(s) from cloud storage forever. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -32,12 +32,12 @@ const features = [
   {
     icon: InfinityIcon,
     title: 'Unlimited cloud capacity',
-    desc: "Files live on Telegram's global MTProto storage infrastructure — effectively unlimited storage with zero VPS disk footprint.",
+    desc: 'Files live on high-availability distributed storage infrastructure — effectively unlimited storage with zero host disk footprint.',
   },
   {
     icon: Zap,
     title: 'Zero-spool streaming',
-    desc: 'Files stream directly through persistent Telethon MTProto into Telegram cloud — up to 2 GB per file without temporary disk spooling.',
+    desc: 'Files stream directly through encrypted streaming pipelines into the cloud vault — up to 2 GB per file without temporary disk spooling.',
   },
   {
     icon: Eye,
@@ -72,23 +72,23 @@ const features = [
 ]
 
 const steps = [
-  { icon: CloudUpload, title: 'Upload', desc: 'Stream any file up to 2 GB directly to MTProto with 0 bytes spooled to disk.' },
+  { icon: CloudUpload, title: 'Upload', desc: 'Stream any file up to 2 GB directly to cloud storage with 0 bytes spooled to disk.' },
   { icon: FolderOpen, title: 'Organize', desc: 'Sort files into folders with breadcrumbs, search everywhere and bulk moves.' },
   { icon: Share2, title: 'Share', desc: 'Publish a link — with optional password — and track every download.' },
 ]
 
 const faqs = [
   {
-    q: 'Is Telegram storage really safe for my files?',
-    a: 'Yes. Telegram distributes data across its global infrastructure with encryption at rest in the cloud. Your files are uploaded as native MTProto documents to a private storage channel accessible only by your authenticated session.',
+    q: 'Is my data secure and private?',
+    a: 'Yes. All data is distributed across redundant, high-availability storage nodes with strict encryption at rest. Your files are stored in an isolated private vault accessible only by your authenticated session.',
   },
   {
     q: 'How large can a single file be?',
-    a: 'Up to 2,000,000,000 bytes (~2 GB) as a single native MTProto document with 0-byte temporary disk spooling. Downloads support HTTP 206 Range requests for instant video and audio seeking without full downloads.',
+    a: 'Up to 2,000,000,000 bytes (~2 GB) as a single native cloud document with 0-byte temporary disk spooling. Downloads support HTTP 206 Range requests for instant video and audio seeking without full downloads.',
   },
   {
     q: 'What happens when I delete a file?',
-    a: 'It goes to Trash for 30 days and can be restored any time. After 30 days it is purged permanently from Telegram. Share links stop working immediately when a file is trashed.',
+    a: 'It goes to Trash for 30 days and can be restored any time. After 30 days it is purged permanently from cloud storage. Share links stop working immediately when a file is trashed.',
   },
   {
     q: 'Can I share files with people who don\'t have an account?',
@@ -101,9 +101,9 @@ function PipelineDiagram() {
   return (
     <div className="rounded-lg border border-border/80 bg-card/90 shadow-sm overflow-hidden">
       <div className="flex items-center justify-between px-4 h-10 border-b border-border/60 bg-muted/20">
-        <span className="micro-label">MTProto streaming pipeline</span>
+        <span className="micro-label">Encrypted streaming pipeline</span>
         <span className="flex items-center gap-1.5 font-mono text-[10px] text-emerald-600 dark:text-emerald-400">
-          <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" /> DAEMON ACTIVE
+          <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" /> VAULT ACTIVE
         </span>
       </div>
       <div className="p-5 space-y-3.5">
@@ -125,7 +125,7 @@ function PipelineDiagram() {
             <Send className="size-4 text-sky-500" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-mono text-[12px] font-medium text-foreground">Telethon MTProto daemon</div>
+            <div className="font-mono text-[12px] font-medium text-foreground">Isolated streaming daemon</div>
             <div className="micro-label mt-0.5">127.0.0.1:3005 · backpressure pipe</div>
           </div>
           <span className="font-mono text-[10px] text-sky-600 dark:text-sky-400 border border-sky-500/20 rounded px-1.5 py-0.5">LOOPBACK</span>
@@ -138,7 +138,7 @@ function PipelineDiagram() {
             <HardDrive className="size-4 text-emerald-500" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-mono text-[12px] font-medium text-foreground">Telegram cloud datacenter</div>
+            <div className="font-mono text-[12px] font-medium text-foreground">Redundant cloud vault</div>
             <div className="micro-label mt-0.5">Single native document · 0 B on host disk</div>
           </div>
           <span className="font-mono text-[10px] text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded px-1.5 py-0.5">SECURE</span>
@@ -219,7 +219,7 @@ export function LandingView() {
             <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
               <div className="mb-5 inline-flex items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1">
                 <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="micro-label !text-foreground/70 font-mono">Telethon MTProto 2.0 Engine</span>
+                <span className="micro-label !text-foreground/70 font-mono">Secure Cloud Storage Engine 2.0</span>
               </div>
               <h1 className="text-4xl sm:text-[52px] font-semibold tracking-[-0.02em] leading-[1.06]">
                 Private storage,<br />
@@ -227,7 +227,7 @@ export function LandingView() {
               </h1>
               <p className="mt-5 text-base text-muted-foreground leading-relaxed max-w-xl">
                 {site.siteDescription} ValencyStudio File Manager connects your private
-                console to Telegram&apos;s global MTProto infrastructure — zero-spool 2 GB streaming,
+                console to high-performance distributed cloud infrastructure — zero-spool 2 GB streaming,
                 seekable byte-range media playback, cryptographic share links and real-time console analytics.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -280,7 +280,7 @@ export function LandingView() {
             <div className="micro-label mb-3">Capabilities</div>
             <h2 className="text-3xl font-semibold tracking-tight">Everything a file host needs</h2>
             <p className="mt-3 text-muted-foreground">
-              Built like Mediafire & Mega — but the storage engine is Telegram.
+              Enterprise-grade file management with zero-knowledge architecture and maximum privacy.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-border/70 border border-border/70 rounded-lg overflow-hidden">
@@ -364,7 +364,7 @@ export function LandingView() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-muted-foreground">
           <Logo size={26} textClass="opacity-90" />
           <div className="flex items-center gap-1.5 font-mono text-[11px]">
-            <Lock className="size-3.5" /> Files stored via Telethon MTProto Engine · {new Date().getFullYear()}
+            <Lock className="size-3.5" /> Secure &amp; Private Cloud Vault · {new Date().getFullYear()}
           </div>
         </div>
       </footer>

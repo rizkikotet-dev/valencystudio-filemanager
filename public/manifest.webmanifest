@@ -1,7 +1,7 @@
 {
   "name": "ValencyStudio File Manager",
   "short_name": "ValencyFM",
-  "description": "Telegram-powered cloud storage — upload, share and stream files with unlimited storage.",
+  "description": "Enterprise-grade private cloud storage — upload, share and stream files with high-speed reliability.",
   "id": "/",
   "start_url": "/",
   "scope": "/",

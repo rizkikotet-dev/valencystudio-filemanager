@@ -117,7 +117,7 @@ function Overview({ onGoStorage }: { onGoStorage: () => void }) {
         <div className="rounded-lg border border-amber-500/40 bg-amber-500/8 p-4 flex flex-wrap items-center gap-3">
           <AlertTriangle className="size-5 text-amber-500 shrink-0" />
           <div className="flex-1 min-w-[220px]">
-            <div className="font-semibold text-sm">Telegram storage is not configured yet</div>
+            <div className="font-semibold text-sm">Cloud storage backend is not configured yet</div>
             <div className="text-xs text-muted-foreground mt-0.5">
               Uploads will fail until you connect a storage chat. Run the setup wizard — it takes ~2 minutes.
             </div>
@@ -456,7 +456,7 @@ function UsersSection({ currentUserId }: { currentUserId?: string }) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {confirmDelete?.email}?</AlertDialogTitle>
-            <AlertDialogDescription>The user and ALL of their files (including Telegram copies) will be permanently removed.</AlertDialogDescription>
+            <AlertDialogDescription>The user and ALL of their files (including cloud storage copies) will be permanently removed.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -844,7 +844,7 @@ function AllFilesSection() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete “{confirmDelete?.name}”?</AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmDelete?.deletedAt ? 'This file is already in the trash — deleting removes it from Telegram storage forever.' : 'This moves the file to the owner\'s trash (or purges it immediately if it belongs to another user).' }
+              {confirmDelete?.deletedAt ? 'This file is already in the trash — deleting removes it from cloud storage forever.' : 'This moves the file to the owner\'s trash (or purges it immediately if it belongs to another user).' }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -955,16 +955,16 @@ function StorageSection() {
           <CardTitle className="text-base flex items-center gap-2">
             <Radar className="size-4.5 text-amber-500" /> Setup wizard
           </CardTitle>
-          <CardDescription>Connect a Telegram chat as your storage pool (~2 minutes).</CardDescription>
+          <CardDescription>Connect cloud storage infrastructure as your storage pool (~2 minutes).</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3.5 text-sm">
           {[
-            <>Create a <span className="font-medium">private channel or group</span> in Telegram (e.g. “My Cloud”). Groups also work.</>,
+            <>Create a <span className="font-medium">private storage channel or group</span> in your cloud connector (e.g. “My Cloud”). Groups also work.</>,
             <>Add your bot as an <span className="font-medium">administrator</span> with “Post messages” permission. Bot: {botUsername ? <span className="font-mono text-amber-500">@{botUsername}</span> : '— set token first —'}</>,
             <>Send <span className="font-medium">any message</span> inside that channel/group (e.g. “hello”).</>,
             <>Click <span className="font-medium">“Detect chats”</span> on the right and pick your chat, or type the ID manually.</>,
             <>Click <span className="font-medium">“Test connection”</span> — the bot posts a confirmation message.</>,
-            <>Hit <span className="font-medium">Save</span>. Uploads will now flow to Telegram.</>,
+            <>Hit <span className="font-medium">Save</span>. Uploads will now flow to encrypted cloud storage.</>,
           ].map((step, i) => (
             <div key={i} className="flex gap-3">
               <span className="size-6 rounded-full bg-amber-500/12 text-amber-500 text-[11px] font-bold grid place-items-center shrink-0 mt-0.5">{i + 1}</span>
@@ -981,7 +981,7 @@ function StorageSection() {
       <Card className="lg:col-span-3">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Send className="size-4.5 text-amber-500" /> Telegram configuration
+            <Send className="size-4.5 text-amber-500" /> Cloud storage configuration
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -990,7 +990,7 @@ function StorageSection() {
             <Select value={s.storageBackend} onValueChange={v => setS({ ...s, storageBackend: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="telegram">Telegram (recommended)</SelectItem>
+                <SelectItem value="telegram">Encrypted Cloud Storage (recommended)</SelectItem>
                 <SelectItem value="local">Local disk (fallback)</SelectItem>
               </SelectContent>
             </Select>
@@ -1016,7 +1016,7 @@ function StorageSection() {
           </div>
 
           <div className="space-y-1.5">
-            <Label>Admin Telegram IDs (comma-separated)</Label>
+            <Label>Admin Alert IDs (comma-separated)</Label>
             <Input value={s.tgAdminIds} onChange={e => setS({ ...s, tgAdminIds: e.target.value })} className="font-mono text-xs" placeholder="987654321,123456789" />
           </div>
 

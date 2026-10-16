@@ -19,11 +19,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     return {
       index: i,
       size: p.size,
-      backend: isTelethon ? 'telethon (mtproto)' : isTg ? 'telegram' : 'local',
+      backend: isTelethon ? 'cloud object' : isTg ? 'distributed cloud' : 'local vault',
       refPreview: isTelethon
-        ? `msg_id:${p.ref.slice('telethon:'.length)}`
+        ? `obj_${p.ref.slice('telethon:'.length)}`
         : isTg
-          ? `tg:${p.ref.split(':')[1]?.slice(0, 12)}…`
+          ? `blk_${p.ref.split(':')[1]?.slice(0, 12)}…`
           : p.ref,
     }
   })

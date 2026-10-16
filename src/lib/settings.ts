@@ -20,7 +20,7 @@ export interface AppSettings {
 
 const DEFAULTS: Record<string, string> = {
   siteName: 'ValencyStudio File Manager',
-  siteDescription: 'Unlimited cloud storage powered by Telegram — fast, secure, and free.',
+  siteDescription: 'Enterprise-grade private cloud storage — fast, secure, and encrypted.',
   announcement: '',
   allowRegistration: 'true',
   defaultQuota: String(1 * 1024 * 1024 * 1024),

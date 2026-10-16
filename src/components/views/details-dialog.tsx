@@ -183,11 +183,11 @@ export function DetailsDialog({ file, onClose }: { file: FileRow | null; onClose
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2 text-sm font-semibold">
                   <HardDrive className="size-4 text-foreground/80" />
-                  {data.parts.length === 1 && data.parts[0]?.backend?.includes('telethon')
-                    ? 'MTProto Storage Document'
-                    : `Storage parts (${data.parts.length})`}
+                  {data.parts.length === 1
+                    ? 'Encrypted Cloud Storage Object'
+                    : `Storage objects (${data.parts.length})`}
                 </div>
-                {data.parts.length === 1 && data.parts[0]?.backend?.includes('telethon') && (
+                {data.parts.length === 1 && (
                   <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25">
                     Zero-spool stream
                   </Badge>

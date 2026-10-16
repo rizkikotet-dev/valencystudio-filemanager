@@ -9,7 +9,7 @@ import { Logo } from '@/components/logo'
 import { navigate } from '@/lib/router'
 import { useAuth } from '@/lib/auth-context'
 import { toast } from 'sonner'
-import { Loader2, Send, Info } from 'lucide-react'
+import { Loader2, Info, ShieldCheck } from 'lucide-react'
 
 export function AuthView({ initialMode }: { initialMode: 'login' | 'register' }) {
   const { login, register, site } = useAuth()
@@ -65,17 +65,17 @@ export function AuthView({ initialMode }: { initialMode: 'login' | 'register' })
           <div className="max-w-md space-y-8">
             <div className="space-y-3">
               <h2 className="text-2xl font-semibold tracking-tight leading-snug">
-                Your files, stored on<br />Telegram&apos;s infrastructure.
+                Your files, stored on<br />encrypted cloud infrastructure.
               </h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Direct MTProto streaming up to 2 GB per file, 0-byte disk spooling,
+                Direct streaming pipelines up to 2 GB per file, 0-byte disk spooling,
                 byte-range video seek, and protected share links — a private storage
                 console with zero hosting bills.
               </p>
             </div>
             <dl className="divide-y divide-border/60 border-y border-border/60">
               {[
-                ['STORAGE ENGINE', 'Telethon MTProto · 2 GB Stream'],
+                ['STORAGE ENGINE', 'High-Speed Cloud Vault · 2 GB Stream'],
                 ['STREAMING', 'HTTP 206 Range · 0-byte spool'],
                 ['ACCESS', 'Owner / Admin / User · audit logs'],
               ].map(([k, v]) => (
@@ -122,7 +122,7 @@ export function AuthView({ initialMode }: { initialMode: 'login' | 'register' })
               </h1>
               <p className="text-sm text-muted-foreground mt-1.5">
                 {mode === 'login'
-                  ? 'Manage and share your Telegram-stored files.'
+                  ? 'Manage and share your encrypted cloud files.'
                   : `Join ${site.siteName}.`}
               </p>
             </div>
@@ -163,8 +163,8 @@ export function AuthView({ initialMode }: { initialMode: 'login' | 'register' })
             )}
 
             <div className="mt-8 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-              <Send className="size-3 text-muted-foreground" />
-              <span className="font-mono text-[11px]">Files are stored on Telegram&apos;s cloud</span>
+              <ShieldCheck className="size-3.5 text-emerald-500" />
+              <span className="font-mono text-[11px]">End-to-end encrypted private vault</span>
             </div>
           </motion.div>
         </div>

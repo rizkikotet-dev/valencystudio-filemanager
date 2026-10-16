@@ -102,7 +102,7 @@ export function actionLabel(action: string): string {
     ADMIN_USER_UPDATE: 'User updated',
     ADMIN_USER_DELETE: 'User deleted',
     ADMIN_SETTINGS_UPDATE: 'Settings updated',
-    ADMIN_TELEGRAM_TEST: 'Telegram test',
+    ADMIN_TELEGRAM_TEST: 'Cloud storage test',
   }
   return map[action] || action
 }

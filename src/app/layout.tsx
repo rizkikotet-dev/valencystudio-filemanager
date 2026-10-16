@@ -4,10 +4,10 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: "ValencyStudio File Manager — Telegram-powered cloud storage",
+  title: "ValencyStudio File Manager — Secure & Private Cloud Storage",
   description:
-    "ValencyStudio File Manager: a file hosting console that stores your files on Telegram — unlimited, secure, with share links, previews and admin analytics.",
-  keywords: ["file manager", "telegram storage", "cloud storage", "file sharing", "ValencyStudio"],
+    "ValencyStudio File Manager: an enterprise-grade private cloud storage console — encrypted, secure, with share links, previews, and admin analytics.",
+  keywords: ["file manager", "secure cloud storage", "private storage", "cloud storage", "file sharing", "ValencyStudio"],
   authors: [{ name: "ValencyStudio" }],
   applicationName: "ValencyStudio File Manager",
   manifest: "/manifest.webmanifest",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "ValencyStudio File Manager",
-    description: "Unlimited cloud storage powered by Telegram — upload, share, stream.",
+    description: "Private & secure cloud storage — encrypted upload, share, and streaming.",
     siteName: "ValencyStudio File Manager",
     type: "website",
   },

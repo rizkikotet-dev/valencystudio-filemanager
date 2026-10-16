@@ -91,7 +91,7 @@ export async function POST(req: Request) {
     await logActivity(
       user.id,
       'FILE_UPLOAD',
-      `Uploaded "${name}" (${uploadedBytes} bytes via Telethon MTProto, SHA256: ${checksum})`,
+      `Uploaded "${name}" (${uploadedBytes} bytes via Encrypted Cloud Stream, SHA256: ${checksum})`,
       getClientIp(req)
     )
     emitChanged(['files', 'activity'], { rooms: [ROOM.user(user.id), ROOM.admins] })

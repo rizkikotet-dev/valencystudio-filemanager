@@ -287,7 +287,7 @@ function SidebarContent({
             <Progress value={pct} className="h-1" />
           )}
           <div className="mt-2.5 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground/80">
-            {stats?.fileCount ?? 0} file{(stats?.fileCount ?? 0) === 1 ? '' : 's'} · telethon mtproto
+            {stats?.fileCount ?? 0} file{(stats?.fileCount ?? 0) === 1 ? '' : 's'} · encrypted vault
           </div>
         </div>
 
@@ -612,7 +612,7 @@ export function DashboardShell({ route }: { route: string }) {
         </main>
 
         <footer className="mt-auto px-6 py-3.5 border-t border-border/50 font-mono text-[11px] text-muted-foreground flex flex-wrap items-center justify-between gap-2">
-          <span>VALANCY STUDIO · TELEGRAM STORAGE</span>
+          <span>VALANCY STUDIO · SECURE CLOUD VAULT</span>
           <span>{user?.email}</span>
         </footer>
       </div>
@@ -629,7 +629,7 @@ export function DashboardShell({ route }: { route: string }) {
             <div className="rounded-lg border-2 border-dashed border-primary/70 bg-card px-10 py-8 text-center">
               <UploadCloud className="mx-auto size-10 text-primary" strokeWidth={1.5} />
               <p className="mt-3 text-base font-semibold">Drop files to upload</p>
-              <p className="font-mono text-[11px] text-muted-foreground mt-1">→ TELEGRAM STORAGE</p>
+              <p className="font-mono text-[11px] text-muted-foreground mt-1">→ ENCRYPTED CLOUD VAULT</p>
             </div>
           </motion.div>
         )}
