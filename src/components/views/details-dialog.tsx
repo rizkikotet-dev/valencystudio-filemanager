@@ -89,7 +89,7 @@ export function DetailsDialog({ file, onClose }: { file: FileRow | null; onClose
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-[15px]">
-            <FileText className="size-4 text-amber-500" /> File details
+            <FileText className="size-4 text-primary" /> File details
           </DialogTitle>
           <DialogDescription className="break-all text-[13px]">{file.name}</DialogDescription>
         </DialogHeader>
@@ -116,10 +116,10 @@ export function DetailsDialog({ file, onClose }: { file: FileRow | null; onClose
             </div>
 
             {data.file.shareEnabled && (
-              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-600 dark:text-amber-400 flex items-center gap-2">
+              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
                 <Send className="size-3.5" /> Public link active{data.file.shareHasPassword ? ' (password protected)' : ''}
                 {data.file.shareExpiresAt && (
-                  <span className={`ml-auto flex items-center gap-1 ${new Date(data.file.shareExpiresAt).getTime() <= Date.now() ? 'text-amber-500' : 'text-amber-600 dark:text-amber-400/80'}`}>
+                  <span className={`ml-auto font-mono flex items-center gap-1 ${new Date(data.file.shareExpiresAt).getTime() <= Date.now() ? 'text-rose-500' : 'text-emerald-600 dark:text-emerald-400/90'}`}>
                     <Timer className="size-3" />
                     {new Date(data.file.shareExpiresAt).getTime() <= Date.now() ? 'link expired' : `until ${formatDate(data.file.shareExpiresAt)}`}
                   </span>
@@ -137,7 +137,7 @@ export function DetailsDialog({ file, onClose }: { file: FileRow | null; onClose
               </div>
             )}
             {data.file.deletedAt && (
-              <div className="rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-2 text-xs text-red-500">
+              <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-600 dark:text-rose-400">
                 In trash — purged automatically after 30 days
               </div>
             )}
@@ -147,7 +147,7 @@ export function DetailsDialog({ file, onClose }: { file: FileRow | null; onClose
             <div>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2 text-sm font-semibold">
-                  <TrendingUp className="size-4 text-amber-500" /> Downloads — last 14 days
+                  <TrendingUp className="size-4 text-foreground/80" /> Downloads — last 14 days
                 </div>
                 <span className="text-xs text-muted-foreground tnum">peak {Math.max(0, ...data.downloadsPerDay.map(d => d.count))}/day</span>
               </div>
@@ -180,8 +180,18 @@ export function DetailsDialog({ file, onClose }: { file: FileRow | null; onClose
             <Separator />
 
             <div>
-              <div className="flex items-center gap-2 text-sm font-semibold mb-2">
-                <HardDrive className="size-4 text-amber-500" /> Storage parts ({data.parts.length})
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <HardDrive className="size-4 text-foreground/80" />
+                  {data.parts.length === 1 && data.parts[0]?.backend?.includes('telethon')
+                    ? 'MTProto Storage Document'
+                    : `Storage parts (${data.parts.length})`}
+                </div>
+                {data.parts.length === 1 && data.parts[0]?.backend?.includes('telethon') && (
+                  <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25">
+                    Zero-spool stream
+                  </Badge>
+                )}
               </div>
               {data.parts.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No parts stored yet.</p>
@@ -190,7 +200,7 @@ export function DetailsDialog({ file, onClose }: { file: FileRow | null; onClose
                   {data.parts.map(p => (
                     <div key={p.index} className="flex items-center justify-between px-3 py-2 text-xs border-b border-border/40 last:border-0">
                       <span className="font-mono">#{String(p.index).padStart(3, '0')}</span>
-                      <span className="text-muted-foreground">{formatBytes(p.size)}</span>
+                      <span className="text-muted-foreground font-mono tnum">{formatBytes(p.size)}</span>
                       <Badge variant="outline" className="text-[9px] capitalize">{p.backend}</Badge>
                       <span className="font-mono text-[10px] text-muted-foreground hidden sm:inline">{p.refPreview}</span>
                     </div>
@@ -204,7 +214,7 @@ export function DetailsDialog({ file, onClose }: { file: FileRow | null; onClose
             <div>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2 text-sm font-semibold">
-                  <History className="size-4 text-amber-500" /> Recent downloads
+                  <History className="size-4 text-foreground/80" /> Recent downloads
                 </div>
                 <span className="text-xs text-muted-foreground">{data.totalDownloads} total</span>
               </div>
@@ -214,7 +224,7 @@ export function DetailsDialog({ file, onClose }: { file: FileRow | null; onClose
                 <div className="space-y-1.5 max-h-40 overflow-y-auto">
                   {data.downloads.map(d => (
                     <div key={d.id} className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Download className="size-3 text-amber-500 shrink-0" />
+                      <Download className="size-3 text-muted-foreground shrink-0" />
                       <span className="font-mono">{d.ip || '—'}</span>
                       <span className="truncate flex-1">{(d.userAgent || '').slice(0, 44)}</span>
                       <span className="whitespace-nowrap">{timeAgo(d.createdAt)}</span>
@@ -284,7 +294,7 @@ function ExpiringLinksSection({ fileId, fileReady, queryClient }: { fileId: stri
     <div>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2 text-sm font-semibold">
-          <LinkIcon className="size-4 text-amber-500" /> Expiring download links
+          <LinkIcon className="size-4 text-foreground/80" /> Expiring download links
         </div>
         <span className="micro-label">direct · no login</span>
       </div>
@@ -311,7 +321,7 @@ function ExpiringLinksSection({ fileId, fileReady, queryClient }: { fileId: stri
             </Select>
             <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none" title="The link dies right after the first download">
               <Switch checked={oneTime} onCheckedChange={setOneTime} className="scale-90" />
-              <Zap className={`size-3.5 ${oneTime ? 'text-amber-400' : ''}`} />
+              <Zap className={`size-3.5 ${oneTime ? 'text-amber-500' : ''}`} />
               One-time
             </label>
             <Button size="sm" className="ml-auto gap-1.5 h-8 text-xs" onClick={create} disabled={creating}>
@@ -320,8 +330,8 @@ function ExpiringLinksSection({ fileId, fileReady, queryClient }: { fileId: stri
           </div>
 
           {secretUrl && (
-            <div className="mt-3 rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 space-y-2">
-              <div className="flex items-center gap-1.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+            <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 space-y-2">
+              <div className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
                 <CheckCircle2 className="size-3.5" /> Link created — copy it now, it is shown only once
               </div>
               <div className="flex items-center gap-2">
@@ -347,26 +357,26 @@ function ExpiringLinksSection({ fileId, fileReady, queryClient }: { fileId: stri
             ) : (
               links.map(l => {
                 const stateBadge = l.revoked
-                  ? <Badge variant="outline" className="text-[9px] border-red-500/40 text-red-500">revoked</Badge>
+                  ? <Badge variant="outline" className="text-[9px] border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400">revoked</Badge>
                   : l.burnt
-                    ? <Badge variant="outline" className="text-[9px] border-amber-500/40 text-amber-500">used up</Badge>
+                    ? <Badge variant="outline" className="text-[9px] border-border/60 bg-muted/30 text-muted-foreground">used up</Badge>
                     : l.expired
-                      ? <Badge variant="outline" className="text-[9px] border-red-500/40 text-red-500">expired</Badge>
-                      : <Badge variant="outline" className="text-[9px] border-amber-500/40 text-amber-500">{timeLeft(l.expiresAt)}</Badge>
+                      ? <Badge variant="outline" className="text-[9px] border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400">expired</Badge>
+                      : <Badge variant="outline" className="text-[9px] border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">{timeLeft(l.expiresAt)}</Badge>
                 return (
                   <div key={l.id} className={`flex items-center gap-2 rounded-md border border-border/40 px-2.5 py-1.5 text-xs ${l.active ? 'bg-card' : 'opacity-60'}`}>
                     <span className="font-mono text-[11px]">{l.prefix}…</span>
                     {l.oneTime && (
-                      <Badge variant="outline" className="text-[9px] border-amber-500/40 text-amber-500 gap-0.5">
-                        <Zap className="size-2.5" /> one-time
+                      <Badge variant="outline" className="text-[9px] border-border/60 bg-muted/30 text-foreground gap-0.5">
+                        <Zap className="size-2.5 text-amber-500" /> one-time
                       </Badge>
                     )}
                     {stateBadge}
-                    <span className="text-[10px] text-muted-foreground ml-auto whitespace-nowrap" title={l.lastUsedAt ? `last used ${timeAgo(l.lastUsedAt)}` : 'never used'}>
+                    <span className="text-[10px] text-muted-foreground font-mono ml-auto whitespace-nowrap" title={l.lastUsedAt ? `last used ${timeAgo(l.lastUsedAt)}` : 'never used'}>
                       {l.usedCount > 0 ? `${l.usedCount}× used` : 'never used'}
                     </span>
                     {l.active && (
-                      <Button size="icon" variant="ghost" className="size-6 shrink-0 text-red-500 hover:text-red-500" onClick={() => revoke(l.id)} aria-label="Revoke link" title="Revoke">
+                      <Button size="icon" variant="ghost" className="size-6 shrink-0 text-rose-500 hover:text-rose-600" onClick={() => revoke(l.id)} aria-label="Revoke link" title="Revoke">
                         <XCircle className="size-3.5" />
                       </Button>
                     )}

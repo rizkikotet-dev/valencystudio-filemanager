@@ -299,15 +299,15 @@ function Overview({ onGoStorage }: { onGoStorage: () => void }) {
         <CardContent className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
           <div>
             <div className="micro-label mb-1.5">Backend</div>
-            <Badge variant="outline" className="border-amber-500/40 text-amber-500 capitalize">{data.storageHealth.backend}</Badge>
+            <Badge variant="outline" className="border-border/80 bg-muted/30 font-mono text-xs capitalize">{data.storageHealth.backend}</Badge>
           </div>
           <div>
-            <div className="micro-label mb-1.5">Bot</div>
-            <div className="font-medium font-mono text-[13px] flex items-center gap-1">
+            <div className="micro-label mb-1.5">Bot / Daemon</div>
+            <div className="font-medium font-mono text-[13px] flex items-center gap-1.5">
               {data.storageHealth.botUsername ? (
-                <>@{data.storageHealth.botUsername} <CheckCircle2 className="size-3.5 text-amber-500" /></>
+                <>@{data.storageHealth.botUsername} <CheckCircle2 className="size-3.5 text-emerald-500" /></>
               ) : (
-                <><XCircle className="size-3.5 text-red-500" /> unreachable</>
+                <><XCircle className="size-3.5 text-rose-500" /> unreachable</>
               )}
             </div>
           </div>

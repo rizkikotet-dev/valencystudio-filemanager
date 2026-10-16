@@ -1,8 +1,9 @@
+import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { parseParts, buildFileResponse, FileMeta } from '@/lib/download'
 import { getSettings } from '@/lib/settings'
 
-async function run() {
+test('streaming and storage invariants', async () => {
   console.log('--- Starting Streaming & Storage Invariant Tests ---')
 
   // 1. Invariant: 1 Telethon file = 1 part (no 16MB chunk splitting)
@@ -106,9 +107,4 @@ async function run() {
   console.log('✓ Invariant 5 passed: Zero-byte files stream cleanly')
 
   console.log('--- All Streaming Storage Invariant Tests PASSED ---')
-}
-
-run().catch(err => {
-  console.error('Test failed:', err)
-  process.exit(1)
 })

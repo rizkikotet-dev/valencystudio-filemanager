@@ -77,7 +77,8 @@ export function PreviewDialog({ file, onClose }: { file: FileRow | null; onClose
         <DialogHeader className="shrink-0">
           <DialogTitle className="truncate pr-6 text-[15px]" title={file.name}>{file.name}</DialogTitle>
           <div className="text-[11px] font-mono tnum text-muted-foreground font-normal">
-            {formatBytes(file.size)} · {file.mimeType} · {formatDate(file.createdAt)} · {file.partCount} part{file.partCount !== 1 ? 's' : ''} on Telegram
+            {formatBytes(file.size)} · {file.mimeType} · {formatDate(file.createdAt)} ·{' '}
+            {file.partCount === 1 ? 'MTProto Document' : `${file.partCount} parts on Telegram`}
           </div>
         </DialogHeader>
 

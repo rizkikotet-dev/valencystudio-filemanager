@@ -435,8 +435,8 @@ export function ProfileView() {
       </Card>
 
       <div className="rounded-lg border border-border/60 bg-muted/20 p-4 flex items-center gap-3 text-sm text-muted-foreground">
-        <Cloud className="size-5 text-amber-500 shrink-0" />
-        All your files are stored on Telegram's cloud via the official Bot API — split into 16 MB parts with redundant references.
+        <Cloud className="size-5 text-emerald-500 shrink-0" />
+        All your files are stored directly on Telegram&apos;s cloud via Telethon MTProto — native documents up to 2 GB with zero-spool streaming.
       </div>
     </div>
   )

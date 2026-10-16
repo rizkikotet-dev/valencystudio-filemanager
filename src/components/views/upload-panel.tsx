@@ -43,11 +43,13 @@ function ItemRow({ item }: { item: UploadItem }) {
   const statusText = () => {
     switch (item.status) {
       case 'queued': return 'Queued…'
-      case 'initializing': return 'Initializing…'
+      case 'initializing': return 'Initializing stream…'
       case 'uploading':
-        return `Part ${Math.min(item.uploadedParts + 1, item.totalParts)}/${item.totalParts} · ${formatBytes(item.speed, 0)}/s`
-      case 'finalizing': return 'Finalizing on Telegram…'
-      case 'done': return `Done · ${formatBytes(item.size)}`
+        return item.totalParts > 1
+          ? `Part ${Math.min(item.uploadedParts + 1, item.totalParts)}/${item.totalParts} · ${formatBytes(item.speed, 0)}/s`
+          : `Streaming · ${formatBytes(item.speed, 0)}/s`
+      case 'finalizing': return 'Indexing on MTProto…'
+      case 'done': return `Completed · ${formatBytes(item.size)}`
       case 'error': return item.error || 'Failed'
       case 'canceled': return 'Canceled'
     }

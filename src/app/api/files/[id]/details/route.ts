@@ -13,12 +13,20 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const file = await db.file.findUnique({ where: { id } })
   if (!file || (file.ownerId !== session.id && !isPrivileged(session))) return jsonError('Not found', 404)
 
-  const parts = parseParts(file.parts).map((p, i) => ({
-    index: i,
-    size: p.size,
-    backend: p.ref.startsWith('tg:') ? 'telegram' : 'local',
-    refPreview: p.ref.startsWith('tg:') ? `tg:${p.ref.split(':')[1].slice(0, 12)}…` : p.ref,
-  }))
+  const parts = parseParts(file.parts).map((p, i) => {
+    const isTelethon = p.ref.startsWith('telethon:')
+    const isTg = p.ref.startsWith('tg:')
+    return {
+      index: i,
+      size: p.size,
+      backend: isTelethon ? 'telethon (mtproto)' : isTg ? 'telegram' : 'local',
+      refPreview: isTelethon
+        ? `msg_id:${p.ref.slice('telethon:'.length)}`
+        : isTg
+          ? `tg:${p.ref.split(':')[1]?.slice(0, 12)}…`
+          : p.ref,
+    }
+  })
 
   const downloads = await db.downloadLog.findMany({
     where: { fileId: id },

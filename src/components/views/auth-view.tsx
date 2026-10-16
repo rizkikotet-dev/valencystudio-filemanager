@@ -68,15 +68,15 @@ export function AuthView({ initialMode }: { initialMode: 'login' | 'register' })
                 Your files, stored on<br />Telegram&apos;s infrastructure.
               </h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Chunked uploads, byte-range streaming, password-protected share
-                links and expiring direct downloads — a private storage node
-                without the storage bill.
+                Direct MTProto streaming up to 2 GB per file, 0-byte disk spooling,
+                byte-range video seek, and protected share links — a private storage
+                console with zero hosting bills.
               </p>
             </div>
             <dl className="divide-y divide-border/60 border-y border-border/60">
               {[
-                ['STORAGE ENGINE', 'Telegram Bot API · 16 MB parts'],
-                ['DOWNLOADS', 'Byte-range streaming · direct links'],
+                ['STORAGE ENGINE', 'Telethon MTProto · 2 GB Stream'],
+                ['STREAMING', 'HTTP 206 Range · 0-byte spool'],
                 ['ACCESS', 'Owner / Admin / User · audit logs'],
               ].map(([k, v]) => (
                 <div key={k} className="flex items-center justify-between py-2.5 gap-4">

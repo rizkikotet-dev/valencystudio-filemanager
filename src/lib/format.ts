@@ -39,9 +39,29 @@ export function isPreviewable(mime: string, name: string): boolean {
   return ['image', 'video', 'audio', 'pdf', 'text'].includes(kind)
 }
 
-/** Monochrome file-kind chip — the icon shape carries the meaning, not color. */
-export function kindColor(_kind: FileKind): string {
-  return 'text-zinc-500 dark:text-zinc-400 bg-zinc-500/10'
+/** Subtle, high-craft file kind badge styling — clear visual scanability without noisy neon tones. */
+export function kindColor(kind: FileKind): string {
+  switch (kind) {
+    case 'image':
+      return 'text-purple-600 dark:text-purple-400 bg-purple-500/10 border border-purple-500/20'
+    case 'video':
+      return 'text-sky-600 dark:text-sky-400 bg-sky-500/10 border border-sky-500/20'
+    case 'audio':
+      return 'text-pink-600 dark:text-pink-400 bg-pink-500/10 border border-pink-500/20'
+    case 'pdf':
+      return 'text-rose-600 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20'
+    case 'archive':
+      return 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20'
+    case 'code':
+      return 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
+    case 'text':
+    case 'doc':
+      return 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20'
+    case 'sheet':
+      return 'text-teal-600 dark:text-teal-400 bg-teal-500/10 border border-teal-500/20'
+    default:
+      return 'text-zinc-600 dark:text-zinc-400 bg-zinc-500/10 border border-zinc-500/20'
+  }
 }
 
 /** Semantic status colors — the only place green/red appear as states. */

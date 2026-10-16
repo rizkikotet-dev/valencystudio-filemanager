@@ -300,14 +300,14 @@ export function PublicFileView({ slug }: { slug: string }) {
                   <div
                     className={`mt-4 inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-medium tnum ${
                       info.remainingDownloads <= 0
-                        ? 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                        ? 'border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400'
                         : info.remainingDownloads <= 3
-                          ? 'border-amber-500/30 bg-amber-500/5 text-amber-600 dark:text-amber-400'
-                          : 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                          ? 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                          : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                     }`}
                   >
                     <DownloadCloud className="size-3" />
-                    {info.remainingDownloads <= 0 ? 'No downloads left' : `${info.remainingDownloads} download${info.remainingDownloads !== 1 ? 's' : ''} left`}
+                    {info.remainingDownloads <= 0 ? 'Download limit reached' : `${info.remainingDownloads} download${info.remainingDownloads !== 1 ? 's' : ''} left`}
                   </div>
                 )}
               </div>
@@ -323,8 +323,8 @@ export function PublicFileView({ slug }: { slug: string }) {
               )}
 
               <div className="p-6 flex flex-wrap items-center justify-between gap-3">
-                <p className="text-xs text-muted-foreground">
-                  Shared via ValencyStudio File Manager — files live on Telegram's cloud.
+                <p className="text-xs text-muted-foreground font-mono text-[11px]">
+                  Shared via ValencyStudio · Telethon MTProto Engine
                 </p>
                 <Button size="lg" className="gap-2" onClick={() => downloadFile(`/api/share/${slug}/download`)}>
                   <Download className="size-4.5" strokeWidth={1.9} /> Download file

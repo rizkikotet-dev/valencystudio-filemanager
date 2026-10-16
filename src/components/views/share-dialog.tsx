@@ -253,7 +253,7 @@ export function ShareDialog({ file, onClose }: { file: FileRow | null; onClose: 
                   <Timer className="size-4 text-muted-foreground" />
                   <Label className="text-sm">Link expiry</Label>
                   {currentExpiry && (
-                    <span className={`ml-auto text-[11px] flex items-center gap-1 ${new Date(currentExpiry).getTime() <= Date.now() ? 'text-amber-500' : 'text-muted-foreground'}`}>
+                    <span className={`ml-auto text-[11px] font-mono flex items-center gap-1 ${new Date(currentExpiry).getTime() <= Date.now() ? 'text-rose-500' : 'text-muted-foreground'}`}>
                       <CalendarClock className="size-3" /> {expiryLabel(currentExpiry)}
                     </span>
                   )}
@@ -280,7 +280,7 @@ export function ShareDialog({ file, onClose }: { file: FileRow | null; onClose: 
                   <Gauge className="size-4 text-muted-foreground" />
                   <Label className="text-sm">Download limit</Label>
                   {currentLimit != null && (
-                    <span className={`ml-auto text-[11px] flex items-center gap-1 ${currentLimit - usedCount <= 0 ? 'text-amber-500' : 'text-muted-foreground'}`}>
+                    <span className={`ml-auto text-[11px] font-mono tnum flex items-center gap-1 ${currentLimit - usedCount <= 0 ? 'text-rose-500' : 'text-muted-foreground'}`}>
                       <InfinityIcon className="size-3 opacity-0" />
                       {Math.max(0, currentLimit - usedCount)} of {currentLimit} left
                     </span>

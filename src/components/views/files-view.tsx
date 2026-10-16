@@ -838,10 +838,10 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
           )}
           <button
             onClick={() => navigate('/files')}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+            className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
               breadcrumb.length === 0
-                ? 'bg-amber-500/12 text-amber-600 dark:text-amber-400 border border-amber-500/30'
-                : 'border border-transparent text-muted-foreground hover:text-foreground hover:bg-accent'
+                ? 'bg-accent text-foreground border border-border/80 shadow-xs'
+                : 'text-muted-foreground hover:text-foreground hover:bg-accent/60'
             }`}
           >
             <Home className="size-3.5" /> My Files
@@ -850,16 +850,16 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
             const last = i === breadcrumb.length - 1
             const bColor = folderColor((b as any).color)
             return (
-              <div key={b.id} className="flex items-center gap-0.5">
-                <ChevronRight className="size-3.5 text-muted-foreground/50" />
+              <div key={b.id} className="flex items-center gap-1">
+                <ChevronRight className="size-3.5 text-muted-foreground/40" />
                 {last ? (
-                  <span className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border ${bColor.active}`}>
+                  <span className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium border ${bColor.active} shadow-xs`}>
                     <Folder className="size-3.5" /> {b.name}
                   </span>
                 ) : (
                   <button
                     onClick={() => navigate(`/files?folder=${encodeURIComponent(b.id)}`)}
-                    className="rounded-full px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer flex items-center gap-1"
+                    className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors cursor-pointer flex items-center gap-1"
                   >
                     {b.name}
                   </button>
@@ -898,10 +898,10 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
               <button
                 key={chip.key}
                 onClick={() => setType(chip.key)}
-                className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer inline-flex items-center gap-1.5 ${
+                className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer inline-flex items-center gap-1.5 ${
                   type === chip.key
-                    ? 'border-amber-500/50 bg-amber-500/10 text-amber-500'
-                    : 'border-border text-muted-foreground hover:bg-accent hover:text-foreground'
+                    ? 'border-primary bg-primary/10 text-primary shadow-xs'
+                    : 'border-border/80 bg-card text-muted-foreground hover:bg-accent/60 hover:text-foreground'
                 }`}
               >
                 {ChipIcon && <ChipIcon className="size-3.5" />}
@@ -948,15 +948,17 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 flex flex-wrap items-center gap-3"
+            className="rounded-lg border border-border/80 bg-card/95 backdrop-blur shadow-md px-4 py-2.5 flex flex-wrap items-center gap-2.5"
           >
-            <span className="text-sm font-medium">{selected.size} selected</span>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs font-semibold font-mono tnum px-2 py-0.5 rounded bg-muted border border-border/60">
+              {selected.size} selected
+            </span>
+            <span className="text-xs text-muted-foreground font-mono tnum">
               {formatBytes(files.filter(f => selected.has(f.id)).reduce((a, f) => a + f.size, 0))}
             </span>
             {selected.size < files.length && (
               <Button size="sm" variant="ghost" className="h-7 text-xs gap-1.5" onClick={selectAll}>
-                <ListChecks className="size-3.5" /> Select all {files.length}
+                <ListChecks className="size-3.5" /> Select all ({files.length})
               </Button>
             )}
             <div className="flex-1" />
@@ -965,34 +967,34 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="gap-1.5 border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
+                  className="gap-1.5 h-8 text-xs"
                   onClick={() => bulkStar(selectedIds.some(id => files.find(f => f.id === id)?.starred) ? false : true)}
                   title={selectedIds.some(id => files.find(f => f.id === id)?.starred) ? 'Unstar selection' : 'Star selection'}
                 >
-                  <Star className="size-3.5" />
+                  <Star className={`size-3.5 ${selectedIds.some(id => files.find(f => f.id === id)?.starred) ? 'fill-amber-400 text-amber-500' : ''}`} />
                   {selectedIds.some(id => files.find(f => f.id === id)?.starred) ? 'Unstar' : 'Star'}
                 </Button>
-                <Button size="sm" variant="outline" className="gap-1.5 border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10" onClick={() => setMoveTarget({ fileIds: [...selected] })}>
+                <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={() => setMoveTarget({ fileIds: [...selected] })}>
                   <FolderInput className="size-3.5" /> Move
                 </Button>
                 {mode === 'files' && (
                   <Button
                     size="sm"
                     variant="outline"
-                    className="gap-1.5 border-zinc-500/40 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-500/10"
+                    className="gap-1.5 h-8 text-xs"
                     onClick={bulkDuplicate}
                     disabled={bulkDupBusy}
-                    title="Instant copies — they reuse the same storage parts"
+                    title="Instant copies — reuse storage parts"
                   >
                     {bulkDupBusy ? <Loader2 className="size-3.5 animate-spin" /> : <CopyPlus className="size-3.5" />}
                     Duplicate
                   </Button>
                 )}
-                <Button size="sm" variant="outline" className="gap-1.5 border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10" onClick={doZipDownload} disabled={zipBusy}>
+                <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={doZipDownload} disabled={zipBusy}>
                   {zipBusy ? <Loader2 className="size-3.5 animate-spin" /> : <Archive className="size-3.5" />}
                   Download ZIP
                 </Button>
-                <Button size="sm" variant="outline" className="gap-1.5" onClick={() => bulkAction('trash')}>
+                <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/10" onClick={() => bulkAction('trash')}>
                   <Trash2 className="size-3.5" /> Trash
                 </Button>
               </>
@@ -1201,7 +1203,7 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
         <>
           <div
             aria-hidden
-            className="fixed z-[60] pointer-events-none rounded-md border-2 border-dashed border-amber-400/90 bg-amber-500/10 shadow-lg shadow-amber-500/10"
+            className="fixed z-[60] pointer-events-none rounded border border-primary/70 bg-primary/10 shadow-sm"
             style={{
               left: Math.min(marqueeRect.x, marqueeRect.x + marqueeRect.w),
               top: Math.min(marqueeRect.y, marqueeRect.y + marqueeRect.h),
@@ -1212,7 +1214,7 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
           {selected.size > 0 && (
             <div
               aria-hidden
-              className="fixed z-[60] pointer-events-none -translate-y-[calc(100%+6px)] rounded-md bg-amber-500 px-2 py-0.5 text-[11px] font-semibold text-amber-950 shadow-md"
+              className="fixed z-[60] pointer-events-none -translate-y-[calc(100%+6px)] rounded bg-foreground px-2 py-0.5 text-[10px] font-mono font-medium text-background shadow-md"
               style={{
                 left: Math.min(marqueeRect.x, marqueeRect.x + marqueeRect.w),
                 top: Math.min(marqueeRect.y, marqueeRect.y + marqueeRect.h),
@@ -1384,7 +1386,7 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             aria-label="Back to top"
             title="Back to top"
-            className="fixed bottom-5 right-5 z-40 size-10 rounded-full border border-amber-500/40 bg-card/90 backdrop-blur shadow-lg shadow-amber-500/10 flex items-center justify-center text-amber-500 hover:bg-amber-500/10 hover:-translate-y-0.5 transition-all cursor-pointer"
+            className="fixed bottom-5 right-5 z-40 size-9 rounded-full border border-border/80 bg-background/90 backdrop-blur shadow-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-border transition-all cursor-pointer"
           >
             <ArrowUpToLine className="size-4" />
           </motion.button>
@@ -1438,13 +1440,13 @@ function GalleryView({
   return (
     <div>
       {hidden > 0 && (
-        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/8 px-4 py-2.5 text-xs">
-          <Images className="size-3.5 text-amber-500 shrink-0" />
-          <span className="text-amber-600 dark:text-amber-400 font-medium">
-            Gallery shows photos only — {hidden} non-image file{hidden !== 1 ? 's' : ''} hidden.
+        <div className="mb-3 flex flex-wrap items-center gap-2.5 rounded-lg border border-border/70 bg-muted/20 px-3.5 py-2 text-xs">
+          <Images className="size-3.5 text-muted-foreground shrink-0" />
+          <span className="text-muted-foreground">
+            Gallery filter active — <span className="font-mono tnum text-foreground">{hidden}</span> non-image file{hidden !== 1 ? 's' : ''} hidden.
           </span>
           <Button size="sm" variant="outline" className="ml-auto h-7 text-xs gap-1.5" onClick={onBackToGrid}>
-            <LayoutGrid className="size-3" /> Show everything
+            <LayoutGrid className="size-3" /> Show all files
           </Button>
         </div>
       )}
@@ -1547,8 +1549,8 @@ function GalleryTile({
           else h.onPreview()
         }
       }}
-      className={`group relative overflow-hidden rounded-lg border bg-card cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 ${
-        selected ? 'border-amber-500/80 ring-2 ring-amber-500/40' : 'border-border/60 hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5'
+      className={`group relative overflow-hidden rounded-lg border bg-card cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+        selected ? 'border-primary ring-2 ring-primary/25' : 'border-border/70 hover:border-border hover:shadow-sm'
       } ${draggingSelf ? 'opacity-40' : ''}`}
     >
       {ready && !failed ? (
@@ -1640,7 +1642,7 @@ function GalleryTile({
       {!selecting && (file.shareEnabled || file.downloads > 0) && mode !== 'trash' && (
         <div className="absolute top-2 right-10 z-10 flex gap-1 group-hover:opacity-0 transition-opacity">
           {file.shareEnabled && (
-            <span className="rounded-md bg-amber-500/85 px-1.5 py-0.5 text-[10px] font-semibold text-amber-950 backdrop-blur" title="Shared publicly">
+            <span className="rounded bg-emerald-600/90 dark:bg-emerald-500/90 px-1.5 py-0.5 text-[10px] font-mono font-medium text-white backdrop-blur" title="Shared publicly">
               shared{file.shareHasPassword ? ' 🔒' : ''}
             </span>
           )}
@@ -1756,16 +1758,16 @@ function FolderCard({
           if (Array.isArray(ids) && ids.length > 0) onDropFiles(ids.filter((x): x is string => typeof x === 'string'))
         } catch {}
       }}
-      className={`group relative rounded-lg border bg-card p-4 cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 ${
+      className={`group relative rounded-lg border bg-card p-4 cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary ${
         dropActive
-          ? 'border-amber-400 bg-amber-500/10 ring-2 ring-amber-400/50 scale-[1.02] shadow-lg shadow-amber-500/10'
-          : `border-border/60 hover:shadow-md hover:-translate-y-0.5 ${folderColor(folder.color).border}`
+          ? 'border-primary bg-primary/10 ring-2 ring-primary/30 scale-[1.01] shadow-md shadow-primary/10'
+          : `border-border/70 hover:border-foreground/20 hover:shadow-xs hover:bg-muted/10 ${folderColor(folder.color).border}`
       }`}
       aria-label={`Open folder ${folder.name}`}
     >
       {dropActive && (
-        <div className="absolute inset-0 z-10 rounded-lg bg-amber-500/5 border-2 border-dashed border-amber-400 grid place-items-center pointer-events-none">
-          <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 bg-background/95 rounded-full px-3 py-1.5 shadow-md">
+        <div className="absolute inset-0 z-10 rounded-lg bg-primary/5 border-2 border-dashed border-primary grid place-items-center pointer-events-none">
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-primary bg-background/95 rounded-md px-3 py-1.5 shadow-md border border-border/80">
             <FolderInput className="size-3.5" /> Drop to move here
           </span>
         </div>
@@ -1883,7 +1885,7 @@ function FolderListRow({
         } catch {}
       }}
       className={`border-b border-border/40 last:border-0 transition-colors cursor-pointer ${
-        dropActive ? 'bg-amber-500/10 ring-1 ring-inset ring-amber-400/60' : 'hover:bg-accent/30'
+        dropActive ? 'bg-primary/10 ring-1 ring-inset ring-primary/40' : 'hover:bg-accent/30'
       }`}
       onClick={onOpen}
     >
@@ -1892,7 +1894,7 @@ function FolderListRow({
           <span
             className={`size-10 rounded-md shrink-0 grid place-items-center border transition-colors ${
               dropActive
-                ? 'bg-amber-500/20 text-amber-500 border-amber-400'
+                ? 'bg-primary/20 text-primary border-primary/50'
                 : folderColor(folder.color).chip
             }`}
           >
@@ -1900,7 +1902,7 @@ function FolderListRow({
           </span>
           <span className="font-medium truncate max-w-[240px]" title={folder.name}>{folder.name}</span>
           {dropActive && (
-            <span className="flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+            <span className="flex items-center gap-1 text-[11px] font-mono text-primary">
               <FolderInput className="size-3" /> drop to move
             </span>
           )}
@@ -1955,8 +1957,8 @@ function GridCard({
         setDraggingSelf(true)
       }}
       onDragEnd={() => setDraggingSelf(false)}
-      className={`group relative rounded-lg border bg-card p-4 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 focus-visible:border-amber-500/60 ${
-        selected ? 'border-amber-500/70 ring-1 ring-amber-500/40 scale-[0.99]' : 'border-border/60 hover:border-amber-500/40 hover:shadow-md hover:shadow-amber-500/5 hover:-translate-y-0.5'
+      className={`group relative rounded-lg border bg-card p-4 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary ${
+        selected ? 'border-primary ring-1 ring-primary/40 bg-primary/[0.03] scale-[0.99]' : 'border-border/70 hover:border-foreground/25 hover:shadow-xs hover:bg-muted/10'
       } ${draggingSelf ? 'opacity-40 scale-[0.98]' : ''}`}
     >
       {selecting && (
@@ -1976,7 +1978,7 @@ function GridCard({
           className={`absolute top-2 right-10 z-10 size-7 rounded-md grid place-items-center cursor-pointer transition-all ${
             file.starred
               ? 'text-amber-400 opacity-100'
-              : 'text-muted-foreground/70 opacity-0 lg:opacity-0 lg:group-hover:opacity-100 hover:text-amber-400 hover:bg-amber-500/10'
+              : 'text-muted-foreground/60 opacity-0 lg:opacity-0 lg:group-hover:opacity-100 hover:text-amber-400 hover:bg-amber-500/10'
           } focus-visible:opacity-100`}
         >
           <Star className={`size-4 ${file.starred ? 'fill-amber-400' : ''}`} />
@@ -1988,7 +1990,7 @@ function GridCard({
           <div className="text-sm font-medium leading-snug line-clamp-2" title={file.name}>
             {file.name}
           </div>
-          <div className="text-[11px] text-muted-foreground mt-1">
+          <div className="text-[11px] font-mono text-muted-foreground mt-1 tnum">
             {formatBytes(file.size)}
             {mode === 'trash' && file.deletedAt ? ` · trashed ${timeAgo(file.deletedAt)}` : ''}
           </div>
@@ -1999,14 +2001,14 @@ function GridCard({
         {file.status !== 'READY' && mode !== 'trash' ? (
           <Badge variant="outline" className={`text-[10px] ${statusColor(file.status)}`}>{file.status}</Badge>
         ) : (
-          <Badge variant="outline" className="text-[10px] text-muted-foreground border-border">
+          <Badge variant="outline" className="text-[10px] font-mono text-muted-foreground/80 border-border/70 bg-muted/20">
             {mode === 'trash' ? formatDate(file.deletedAt || file.createdAt) : timeAgo(file.createdAt)}
           </Badge>
         )}
         {showPath && file.folderPath && (
           <Badge
             variant="outline"
-            className="text-[10px] gap-1 border-amber-500/40 text-amber-600 dark:text-amber-400 max-w-full"
+            className="text-[10px] gap-1 border-border/80 bg-muted/40 text-muted-foreground max-w-full font-mono"
             title={`Located in ${file.folderPath}`}
           >
             <Folder className="size-2.5 shrink-0" />
@@ -2014,23 +2016,23 @@ function GridCard({
           </Badge>
         )}
         {mode !== 'trash' && file.starred && (
-          <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/40 text-amber-500" title="Starred file">
+          <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium" title="Starred file">
             <Star className="size-2.5 fill-amber-400 text-amber-400" /> starred
           </Badge>
         )}
         {mode !== 'trash' && file.shareEnabled && (
-          <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/40 text-amber-500">
+          <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">
             <LinkIcon className="size-2.5" /> shared{file.shareHasPassword ? ' 🔒' : ''}
           </Badge>
         )}
         {mode !== 'trash' && file.shareEnabled && file.shareExpiresAt && new Date(file.shareExpiresAt).getTime() <= Date.now() && (
-          <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/50 text-amber-500">
+          <Badge variant="outline" className="text-[10px] gap-1 border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 font-medium">
             <AlarmClock className="size-2.5" /> expired
           </Badge>
         )}
         {file.downloads > 0 && (
-          <Badge variant="outline" className="text-[10px] text-muted-foreground border-border">
-            {file.downloads} download{file.downloads !== 1 ? 's' : ''}
+          <Badge variant="outline" className="text-[10px] font-mono text-muted-foreground border-border/70 bg-muted/20 tnum">
+            {file.downloads} dl{file.downloads !== 1 ? 's' : ''}
           </Badge>
         )}
       </div>
@@ -2076,18 +2078,18 @@ function ListView({
   handlersFor: (f: FileRow) => CardHandlers
 }) {
   return (
-    <div className="rounded-lg border border-border/60 bg-card overflow-hidden">
+    <div className="rounded-lg border border-border/70 bg-card overflow-hidden shadow-xs">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border/60 text-left text-xs text-muted-foreground">
-              {selecting && <th className="font-medium px-3 py-3 w-8"></th>}
-              <th className="font-medium px-4 py-3">Name</th>
-              <th className="font-medium px-4 py-3 hidden sm:table-cell">Size</th>
-              <th className="font-medium px-4 py-3 hidden md:table-cell">{mode === 'trash' ? 'Trashed' : 'Uploaded'}</th>
-              <th className="font-medium px-4 py-3 hidden lg:table-cell">Downloads</th>
-              <th className="font-medium px-4 py-3">Status</th>
-              <th className="font-medium px-4 py-3 w-10"></th>
+            <tr className="border-b border-border/70 text-left font-mono text-[11px] uppercase tracking-wider text-muted-foreground/70 bg-muted/20">
+              {selecting && <th className="font-medium px-3 py-2.5 w-8"></th>}
+              <th className="font-medium px-4 py-2.5">Name</th>
+              <th className="font-medium px-4 py-2.5 hidden sm:table-cell">Size</th>
+              <th className="font-medium px-4 py-2.5 hidden md:table-cell">{mode === 'trash' ? 'Trashed' : 'Uploaded'}</th>
+              <th className="font-medium px-4 py-2.5 hidden lg:table-cell">Downloads</th>
+              <th className="font-medium px-4 py-2.5">Status</th>
+              <th className="font-medium px-4 py-2.5 w-10"></th>
             </tr>
           </thead>
           <tbody>
@@ -2100,7 +2102,9 @@ function ListView({
                   data-kb="file"
                   data-kb-type="file"
                   data-kb-id={f.id}
-                  className={`border-b border-border/40 last:border-0 transition-colors cursor-pointer focus-visible:outline-none focus-visible:bg-amber-500/5 ${selected.has(f.id) ? 'bg-amber-500/5' : 'hover:bg-accent/30'}`}
+                  className={`border-b border-border/40 last:border-0 transition-colors cursor-pointer focus-visible:outline-none focus-visible:bg-primary/5 ${
+                    selected.has(f.id) ? 'bg-primary/[0.04] border-l-2 border-l-primary' : 'hover:bg-muted/20'
+                  }`}
                 >
                   {selecting && (
                     <td className="px-3 py-3">
@@ -2114,7 +2118,7 @@ function ListView({
                         <span className="font-medium truncate block max-w-[240px]" title={f.name}>{f.name}</span>
                         {showPath && f.folderPath && (
                           <span
-                            className="mt-0.5 flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 max-w-[240px]"
+                            className="mt-0.5 flex items-center gap-1 font-mono text-[10px] text-muted-foreground max-w-[240px]"
                             title={`Located in ${f.folderPath}`}
                           >
                             <Folder className="size-2.5 shrink-0" />
@@ -2129,16 +2133,16 @@ function ListView({
                       )}
                       {mode !== 'trash' && f.shareEnabled && (
                         <span title={f.shareExpiresAt && new Date(f.shareExpiresAt).getTime() <= Date.now() ? 'Share link expired' : 'Share link active'}>
-                          <LinkIcon className={`size-3.5 shrink-0 ${f.shareExpiresAt && new Date(f.shareExpiresAt).getTime() <= Date.now() ? 'text-amber-500' : 'text-amber-500'}`} />
+                          <LinkIcon className={`size-3.5 shrink-0 ${f.shareExpiresAt && new Date(f.shareExpiresAt).getTime() <= Date.now() ? 'text-rose-500' : 'text-emerald-600 dark:text-emerald-400'}`} />
                         </span>
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">{formatBytes(f.size)}</td>
-                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
+                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden sm:table-cell tnum">{formatBytes(f.size)}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden md:table-cell tnum">
                     {formatDate(mode === 'trash' && f.deletedAt ? f.deletedAt : f.createdAt)}
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{f.downloads}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden lg:table-cell tnum">{f.downloads}</td>
                   <td className="px-4 py-3">
                     <Badge variant="outline" className={`text-[10px] ${mode === 'trash' ? 'border-red-500/40 text-red-500' : statusColor(f.status)}`}>
                       {mode === 'trash' ? 'TRASHED' : f.status}

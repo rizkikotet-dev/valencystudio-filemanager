@@ -27,27 +27,27 @@ import {
   HardDrive,
 } from 'lucide-react'
 
-/* Monochrome feature set — icons carry meaning, one accent max */
+/* Industrial monochrome feature set with semantic accents */
 const features = [
   {
     icon: InfinityIcon,
-    title: 'Unlimited storage',
-    desc: "Files live on Telegram's cloud — effectively unlimited space with no servers to maintain and no bills that grow with your data.",
+    title: 'Unlimited cloud capacity',
+    desc: "Files live on Telegram's global MTProto storage infrastructure — effectively unlimited storage with zero VPS disk footprint.",
   },
   {
     icon: Zap,
-    title: 'Chunked parallel uploads',
-    desc: 'Large files are split into 16 MB parts and uploaded in parallel with live progress, speed and resume support.',
+    title: 'Zero-spool streaming',
+    desc: 'Files stream directly through persistent Telethon MTProto into Telegram cloud — up to 2 GB per file without temporary disk spooling.',
   },
   {
     icon: Eye,
-    title: 'Instant previews',
-    desc: 'Stream images, video, audio and PDFs straight from storage with real byte-range seeking — no full download needed.',
+    title: 'Seekable HTTP 206 playback',
+    desc: 'Stream high-bitrate video, audio, and documents straight from storage with real byte-range seeking without downloading full files.',
   },
   {
     icon: Link2,
-    title: 'Share links',
-    desc: 'One-click public links with optional password protection, download counters, expiry and instant revocation.',
+    title: 'Protected share links',
+    desc: 'Time-bounded, one-time burnable, or password-guarded download tokens with instant revocation and access counters.',
   },
   {
     icon: FolderOpen,
@@ -72,7 +72,7 @@ const features = [
 ]
 
 const steps = [
-  { icon: CloudUpload, title: 'Upload', desc: 'Drag & drop any file. It is chunked and stored safely on Telegram.' },
+  { icon: CloudUpload, title: 'Upload', desc: 'Stream any file up to 2 GB directly to MTProto with 0 bytes spooled to disk.' },
   { icon: FolderOpen, title: 'Organize', desc: 'Sort files into folders with breadcrumbs, search everywhere and bulk moves.' },
   { icon: Share2, title: 'Share', desc: 'Publish a link — with optional password — and track every download.' },
 ]
@@ -80,11 +80,11 @@ const steps = [
 const faqs = [
   {
     q: 'Is Telegram storage really safe for my files?',
-    a: 'Yes. Telegram distributes data across its global infrastructure with encryption at rest in the cloud. Your files are stored as document parts in a private storage chat that only your bot can access.',
+    a: 'Yes. Telegram distributes data across its global infrastructure with encryption at rest in the cloud. Your files are uploaded as native MTProto documents to a private storage channel accessible only by your authenticated session.',
   },
   {
     q: 'How large can a single file be?',
-    a: 'Files are split into 16 MB parts and reassembled transparently on download — the practical limit is the per-file cap set by your administrator (2 GB by default). Downloads support byte-range, so video streaming works.',
+    a: 'Up to 2,000,000,000 bytes (~2 GB) as a single native MTProto document with 0-byte temporary disk spooling. Downloads support HTTP 206 Range requests for instant video and audio seeking without full downloads.',
   },
   {
     q: 'What happens when I delete a file?',
@@ -96,56 +96,65 @@ const faqs = [
   },
 ]
 
-/** Honest architecture strip — how a file actually travels through the system */
+/** Technical architecture strip — how a file streams end-to-end */
 function PipelineDiagram() {
   return (
-    <div className="rounded-lg border border-border/70 bg-card overflow-hidden">
-      <div className="flex items-center justify-between px-4 h-10 border-b border-border/60">
-        <span className="micro-label">Storage pipeline</span>
-        <span className="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
-          <span className="size-1.5 rounded-full bg-amber-500" /> LIVE
+    <div className="rounded-lg border border-border/80 bg-card/90 shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between px-4 h-10 border-b border-border/60 bg-muted/20">
+        <span className="micro-label">MTProto streaming pipeline</span>
+        <span className="flex items-center gap-1.5 font-mono text-[10px] text-emerald-600 dark:text-emerald-400">
+          <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" /> DAEMON ACTIVE
         </span>
       </div>
-      <div className="p-5 space-y-4">
+      <div className="p-5 space-y-3.5">
         <div className="flex items-center gap-3">
           <div className="size-9 rounded-md border border-border bg-muted/40 grid place-items-center shrink-0">
             <FileIcon className="size-4 text-muted-foreground" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-mono text-[12px]">source.file</div>
-            <div className="micro-label mt-1">Split into 16 MB parts</div>
+            <div className="font-mono text-[12px] font-medium text-foreground">client.upload_stream</div>
+            <div className="micro-label mt-0.5">Zero-spool browser XHR / binary stream</div>
           </div>
-          <span className="font-mono text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">N PARTS</span>
+          <span className="font-mono text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5 tnum">&le; 2.0 GB</span>
         </div>
-        <div className="ml-[18px] h-5 border-l border-dashed border-border" />
+
+        <div className="ml-[18px] h-4 border-l border-dashed border-border/80" />
+
         <div className="flex items-center gap-3">
-          <div className="size-9 rounded-md border border-primary/40 bg-primary/10 grid place-items-center shrink-0">
-            <Send className="size-4 text-primary" />
+          <div className="size-9 rounded-md border border-sky-500/30 bg-sky-500/10 grid place-items-center shrink-0">
+            <Send className="size-4 text-sky-500" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-mono text-[12px]">part_0000 … part_NNNN</div>
-            <div className="micro-label mt-1">Parallel upload → storage chat</div>
+            <div className="font-mono text-[12px] font-medium text-foreground">Telethon MTProto daemon</div>
+            <div className="micro-label mt-0.5">127.0.0.1:3005 · backpressure pipe</div>
           </div>
+          <span className="font-mono text-[10px] text-sky-600 dark:text-sky-400 border border-sky-500/20 rounded px-1.5 py-0.5">LOOPBACK</span>
         </div>
-        <div className="ml-[18px] h-5 border-l border-dashed border-border" />
+
+        <div className="ml-[18px] h-4 border-l border-dashed border-border/80" />
+
         <div className="flex items-center gap-3">
-          <div className="size-9 rounded-md border border-border bg-muted/40 grid place-items-center shrink-0">
-            <HardDrive className="size-4 text-muted-foreground" />
+          <div className="size-9 rounded-md border border-emerald-500/30 bg-emerald-500/10 grid place-items-center shrink-0">
+            <HardDrive className="size-4 text-emerald-500" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-mono text-[12px]">telegram storage chat</div>
-            <div className="micro-label mt-1">file_id refs · encrypted at rest</div>
+            <div className="font-mono text-[12px] font-medium text-foreground">Telegram cloud datacenter</div>
+            <div className="micro-label mt-0.5">Single native document · 0 B on host disk</div>
           </div>
+          <span className="font-mono text-[10px] text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded px-1.5 py-0.5">SECURE</span>
         </div>
-        <div className="ml-[18px] h-5 border-l border-dashed border-border" />
+
+        <div className="ml-[18px] h-4 border-l border-dashed border-border/80" />
+
         <div className="flex items-center gap-3">
           <div className="size-9 rounded-md border border-border bg-muted/40 grid place-items-center shrink-0">
             <ArrowRight className="size-4 text-muted-foreground" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-mono text-[12px]">byte-range stream</div>
-            <div className="micro-label mt-1">Reassembled on download · seekable</div>
+            <div className="font-mono text-[12px] font-medium text-foreground">HTTP 206 range stream</div>
+            <div className="micro-label mt-0.5">Random-access seek · video &amp; audio</div>
           </div>
+          <span className="font-mono text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">SEEKABLE</span>
         </div>
       </div>
     </div>
@@ -209,17 +218,17 @@ export function LandingView() {
           <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-16 pb-20 grid lg:grid-cols-[1.15fr_1fr] gap-14 items-center">
             <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
               <div className="mb-5 inline-flex items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1">
-                <Send className="size-3 text-primary" />
-                <span className="micro-label !text-foreground/70">Powered by Telegram Bot API</span>
+                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="micro-label !text-foreground/70 font-mono">Telethon MTProto 2.0 Engine</span>
               </div>
               <h1 className="text-4xl sm:text-[52px] font-semibold tracking-[-0.02em] leading-[1.06]">
                 Private storage,<br />
                 <span className="text-primary">zero servers</span> to run.
               </h1>
               <p className="mt-5 text-base text-muted-foreground leading-relaxed max-w-xl">
-                {site.siteDescription} ValencyStudio File Manager wraps Telegram&apos;s
-                infrastructure in a precise file console — chunked uploads, byte-range
-                streaming, protected share links and full admin analytics.
+                {site.siteDescription} ValencyStudio File Manager connects your private
+                console to Telegram&apos;s global MTProto infrastructure — zero-spool 2 GB streaming,
+                seekable byte-range media playback, cryptographic share links and real-time console analytics.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Button size="lg" className="gap-2" onClick={() => navigate('/register')}>
@@ -252,10 +261,10 @@ export function LandingView() {
         <section className="border-b border-border/60">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { v: '16 MB', l: 'Chunk size' },
-              { v: '2 GB+', l: 'Max file size' },
+              { v: '2.0 GB', l: 'Single file cap' },
+              { v: '0 B', l: 'Disk spool buffer' },
               { v: '∞', l: 'Storage pool' },
-              { v: 'HTTP 206', l: 'Range streaming' },
+              { v: 'HTTP 206', l: 'Seekable range' },
             ].map(s => (
               <div key={s.l}>
                 <div className="font-mono text-2xl font-semibold text-foreground tnum">{s.v}</div>
@@ -355,7 +364,7 @@ export function LandingView() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-muted-foreground">
           <Logo size={26} textClass="opacity-90" />
           <div className="flex items-center gap-1.5 font-mono text-[11px]">
-            <Lock className="size-3.5" /> Files stored via Telegram Bot API · {new Date().getFullYear()}
+            <Lock className="size-3.5" /> Files stored via Telethon MTProto Engine · {new Date().getFullYear()}
           </div>
         </div>
       </footer>

@@ -287,7 +287,7 @@ function SidebarContent({
             <Progress value={pct} className="h-1" />
           )}
           <div className="mt-2.5 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground/80">
-            {stats?.fileCount ?? 0} file{(stats?.fileCount ?? 0) === 1 ? '' : 's'} · telegram storage
+            {stats?.fileCount ?? 0} file{(stats?.fileCount ?? 0) === 1 ? '' : 's'} · telethon mtproto
           </div>
         </div>
 
