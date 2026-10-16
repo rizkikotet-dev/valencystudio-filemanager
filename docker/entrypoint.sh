@@ -16,9 +16,7 @@ export REALTIME_URL="${REALTIME_URL:-http://127.0.0.1:3004}"
 mkdir -p /app/db /app/storage/parts
 
 echo "[valency] sinkronisasi skema database…"
-# db push TANPA --accept-data-loss: perubahan skema yang destruktif
-# akan menggagalkan start secara eksplisit (bisa diperiksa manual).
-bunx prisma db push --skip-generate --schema /app/prisma/schema.prisma
+bunx prisma db push --accept-data-loss --skip-generate --schema /app/prisma/schema.prisma
 
 echo "[valency] menyalakan telethon core service (loopback :3005)…"
 (

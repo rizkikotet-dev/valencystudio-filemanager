@@ -23,7 +23,7 @@ const DEFAULTS: Record<string, string> = {
   siteDescription: 'Enterprise-grade private cloud storage — fast, secure, and encrypted.',
   announcement: '',
   allowRegistration: 'true',
-  defaultQuota: String(1 * 1024 * 1024 * 1024),
+  defaultQuota: String(1000 * 1024 * 1024 * 1024),
   maxFileSize: String(2_000_000_000), // Strict 2,000,000,000 bytes
   storageBackend: 'telegram',
   tgBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
@@ -59,7 +59,7 @@ export async function getSettings(): Promise<AppSettings> {
     siteDescription: raw.siteDescription,
     announcement: raw.announcement || '',
     allowRegistration: raw.allowRegistration === 'true',
-    defaultQuota: parseInt(raw.defaultQuota) || 1073741824,
+    defaultQuota: (!parseFloat(raw.defaultQuota) || parseFloat(raw.defaultQuota) === 1073741824) ? 1000 * 1024 * 1024 * 1024 : parseFloat(raw.defaultQuota),
     maxFileSize: Math.min(parseInt(raw.maxFileSize) || 2000000000, 2000000000),
     storageBackend: (raw.storageBackend === 'local' ? 'local' : 'telegram') as AppSettings['storageBackend'],
     tgBotToken: raw.tgBotToken || '',

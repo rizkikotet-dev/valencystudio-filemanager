@@ -106,5 +106,10 @@ test('streaming and storage invariants', async () => {
   assert.equal(emptyRes.headers.get('content-length'), '0')
   console.log('✓ Invariant 5 passed: Zero-byte files stream cleanly')
 
+  // 6. Invariant: Default new user quota is 1000 GB
+  const currentSettings = await getSettings()
+  assert.equal(currentSettings.defaultQuota, 1000 * 1024 * 1024 * 1024)
+  console.log('✓ Invariant 6 passed: Default storage quota for new users is 1000 GB')
+
   console.log('--- All Streaming Storage Invariant Tests PASSED ---')
 })

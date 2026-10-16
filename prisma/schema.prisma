@@ -14,7 +14,7 @@ model User {
   passwordHash String
   name         String?
   role         String   @default("USER") // OWNER | ADMIN | USER
-  quota        Int      @default(1073741824) // bytes, -1 = unlimited
+  quota        Float    @default(1073741824000) // bytes, -1 = unlimited
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
