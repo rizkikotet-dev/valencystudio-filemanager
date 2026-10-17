@@ -20,7 +20,7 @@ export function RealtimeBadge({ className = '' }: { className?: string }) {
       className={`inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 font-mono text-[10px] tracking-[0.14em] text-muted-foreground ${className}`}
       title={
         status === 'live'
-          ? 'Realtime connected — changes stream in without refresh'
+          ? 'Realtime SYNC active — changes stream in without refresh'
           : status === 'connecting'
             ? 'Connecting to realtime channel…'
             : 'Realtime channel offline — falling back to periodic polling'

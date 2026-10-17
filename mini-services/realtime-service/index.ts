@@ -26,6 +26,7 @@ import { Database } from 'bun:sqlite'
 
 const PORT = 3003 // browser-facing socket.io endpoint (via gateway ?XTransformPort=3003)
 const INTERNAL_PORT = 3004 // loopback-only broadcast API for the Next.js server
+const APP_PORT = process.env.APP_PORT || process.env.PORT || 3000
 const INTERNAL_KEY = process.env.REALTIME_INTERNAL_KEY || 'vs-internal-key'
 const DB_PATH = process.env.REALTIME_DB_PATH
   ? isAbsolute(process.env.REALTIME_DB_PATH)
@@ -138,11 +139,17 @@ try {
       const row = fpStmt.get() as Record<string, number>
       const fp = Object.values(row).join('|')
       if (lastFingerprint !== '' && fp !== lastFingerprint) {
-        io.emit('changed', {
+        const payload = {
           domains: ['files', 'folders', 'users', 'activity', 'downloads', 'settings', 'tokens'],
           at: Date.now(),
-          source: 'db',
-        })
+          source: 'db' as const,
+        }
+        io.emit('changed', payload)
+        fetch(`http://127.0.0.1:${APP_PORT}/api/realtime`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-internal-key': INTERNAL_KEY },
+          body: JSON.stringify({ ...payload, all: true }),
+        }).catch(() => {})
       }
       lastFingerprint = fp
     } catch {

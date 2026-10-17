@@ -7,6 +7,8 @@
  * Event contract with the client hub (src/lib/realtime.ts):
  *   'changed' -> { domains: RtDomain[], at, source: 'api' }
  */
+import { realtimeHub } from '@/lib/realtime-hub'
+
 const RT_URL = process.env.REALTIME_URL || 'http://127.0.0.1:3004'
 const INTERNAL_KEY = process.env.REALTIME_INTERNAL_KEY || 'vs-internal-key'
 
@@ -30,6 +32,15 @@ export function emitChanged(
   opts?: { rooms?: string[]; all?: boolean }
 ): void {
   try {
+    const event = {
+      domains,
+      at: Date.now(),
+      source: 'api' as const,
+    }
+    // 1) Direct in-memory broadcast to connected SSE clients
+    realtimeHub.broadcast(event, opts)
+
+    // 2) Best-effort broadcast to loopback service if running
     const rooms = opts?.rooms?.filter(Boolean) ?? []
     const body = JSON.stringify({
       domains,
