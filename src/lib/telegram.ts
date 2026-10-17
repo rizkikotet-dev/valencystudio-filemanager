@@ -32,22 +32,42 @@ export async function tgCall(method: string, body?: Record<string, unknown>, for
     headers: form ? undefined : { 'Content-Type': 'application/json' },
     signal: AbortSignal.timeout(timeoutMs),
   })
-  let res: Response
-  try {
-    res = await doFetch()
-  } catch {
-    // one retry — transient DNS/socket blips would otherwise surface as a cryptic "fetch failed"
+
+  let attempts = 0
+  while (attempts < 3) {
+    attempts++
+    let res: Response
     try {
       res = await doFetch()
     } catch {
-      throw new Error(`Could not reach api.telegram.org (${method}). Check the server's network connection and try again.`)
+      // one retry on network blip
+      try {
+        res = await doFetch()
+      } catch {
+        throw new Error(`Could not reach api.telegram.org (${method}). Check the server's network connection and try again.`)
+      }
     }
+
+    let data: TgResult
+    try {
+      data = (await res.json()) as TgResult
+    } catch {
+      throw new Error(`Telegram API returned a non-JSON response (HTTP ${res.status}) for ${method}.`)
+    }
+
+    // Rate-limit backoff on HTTP 429
+    if (res.status === 429 || (!data.ok && data.parameters?.retry_after)) {
+      const waitSec = Math.min(data.parameters?.retry_after || 5, 30)
+      if (attempts < 3) {
+        await new Promise(r => setTimeout(r, (waitSec + 1) * 1000))
+        continue
+      }
+    }
+
+    return data
   }
-  try {
-    return (await res.json()) as TgResult
-  } catch {
-    throw new Error(`Telegram API returned a non-JSON response (HTTP ${res.status}) for ${method}.`)
-  }
+
+  throw new Error(`Telegram API rate limit exceeded for ${method}.`)
 }
 
 export async function getMe() {

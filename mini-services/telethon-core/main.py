@@ -8,11 +8,10 @@ from config import Settings, get_settings
 from client_manager import TelethonClientManager
 from stream_reader import AsyncStreamReader
 
-_settings = get_settings()
-_client_mgr = TelethonClientManager(_settings)
+_client_mgr = TelethonClientManager(get_settings())
 
 def get_settings_dep() -> Settings:
-    return _settings
+    return _client_mgr.settings
 
 def get_client_mgr() -> TelethonClientManager:
     return _client_mgr

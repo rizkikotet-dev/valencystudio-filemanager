@@ -24,7 +24,7 @@ const DEFAULTS: Record<string, string> = {
   announcement: '',
   allowRegistration: 'true',
   defaultQuota: String(1000 * 1024 * 1024 * 1024),
-  maxFileSize: String(2_000_000_000), // Strict 2,000,000,000 bytes
+  maxFileSize: String(2_147_483_648), // 2 GiB MTProto limit
   storageBackend: 'telegram',
   tgBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
   tgApiId: process.env.TELEGRAM_API_ID || process.env.TELETHON_API_ID || '',
@@ -60,7 +60,7 @@ export async function getSettings(): Promise<AppSettings> {
     announcement: raw.announcement || '',
     allowRegistration: raw.allowRegistration === 'true',
     defaultQuota: (!parseFloat(raw.defaultQuota) || parseFloat(raw.defaultQuota) === 1073741824) ? 1000 * 1024 * 1024 * 1024 : parseFloat(raw.defaultQuota),
-    maxFileSize: Math.min(parseInt(raw.maxFileSize) || 2000000000, 2000000000),
+    maxFileSize: Math.min(parseInt(raw.maxFileSize) || 2147483648, 2147483648),
     storageBackend: (raw.storageBackend === 'local' ? 'local' : 'telegram') as AppSettings['storageBackend'],
     tgBotToken: raw.tgBotToken || '',
     tgApiId: raw.tgApiId || '',

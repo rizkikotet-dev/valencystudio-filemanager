@@ -4,13 +4,20 @@ import { jsonError } from '@/lib/api-helpers'
 import { getUsedBytes, publicFile } from '@/lib/files'
 import { ownedFolder } from '@/lib/folders'
 import { emitChanged, ROOM } from '@/lib/realtime-emit'
-import { uploadToTelethon } from '@/lib/telethon'
+import { isTelethonHealthy, uploadToTelethon } from '@/lib/telethon'
 import { getSettings } from '@/lib/settings'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+export const maxDuration = 900
 
-const MAX_BYTES = 2_000_000_000
+const MAX_BYTES = 2_147_483_648 // 2 GiB
+
+export async function GET() {
+  const settings = await getSettings()
+  const available = await isTelethonHealthy()
+  return Response.json({ ok: true, available, maxFileSize: settings.maxFileSize })
+}
 
 export async function POST(req: Request) {
   const user = await getSessionUser(req)
@@ -53,6 +60,11 @@ export async function POST(req: Request) {
 
   if (!req.body) {
     return jsonError('Missing request body stream.', 400)
+  }
+
+  // Pre-check Telethon service availability before creating PENDING row
+  if (!(await isTelethonHealthy())) {
+    return jsonError('Encrypted cloud streaming service is unavailable. Falling back to chunked upload.', 503)
   }
 
   // Create PENDING file record

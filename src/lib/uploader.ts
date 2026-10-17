@@ -208,6 +208,24 @@ function xhrUploadStream(
   })
 }
 
+let telethonAvailable: boolean | null = null
+let telethonLastCheck = 0
+
+async function checkTelethonAvailable(signal?: AbortSignal): Promise<boolean> {
+  const now = Date.now()
+  if (telethonAvailable !== null && now - telethonLastCheck < 30_000) {
+    return telethonAvailable
+  }
+  try {
+    const res = await fetch('/api/files/upload-stream', { method: 'GET', signal }).then(r => r.json())
+    telethonAvailable = !!res?.available
+  } catch {
+    telethonAvailable = false
+  }
+  telethonLastCheck = now
+  return telethonAvailable
+}
+
 async function processFile(key: string) {
   const file = files.get(key)
   const item = readStore().items.find(i => i.key === key)
@@ -219,21 +237,26 @@ async function processFile(key: string) {
   try {
     const folderId = folderTargets.get(key) ?? null
 
-    // Try direct Telethon streaming upload first if this is not a resume
+    // Try direct Telethon streaming upload first if this is not a resume and Telethon is available
     if (!item.fileId) {
-      update(key, { status: 'uploading', totalParts: 1, uploadedParts: 0, progress: 0 })
-      try {
-        const streamRes = await xhrUploadStream(key, file, folderId, controller.signal)
-        update(key, { status: 'done', progress: 1, speed: 0, fileId: streamRes.id })
-        onFinished?.(readStore().items.find(i => i.key === key)!)
-        return
-      } catch (streamErr: any) {
-        if (streamErr?.name === 'AbortError') throw streamErr
-        const msg = streamErr?.message || ''
-        if (msg.includes('413') || msg.includes('quota') || msg.includes('exceeds') || msg.includes('Quota')) {
-          throw streamErr
+      const canStream = await checkTelethonAvailable(controller.signal)
+      if (canStream) {
+        update(key, { status: 'uploading', totalParts: 1, uploadedParts: 0, progress: 0 })
+        try {
+          const streamRes = await xhrUploadStream(key, file, folderId, controller.signal)
+          update(key, { status: 'done', progress: 1, speed: 0, fileId: streamRes.id })
+          onFinished?.(readStore().items.find(i => i.key === key)!)
+          return
+        } catch (streamErr: any) {
+          if (streamErr?.name === 'AbortError') throw streamErr
+          const msg = streamErr?.message || ''
+          // Only abort if user storage quota is actually exceeded
+          if (msg.toLowerCase().includes('quota')) {
+            throw streamErr
+          }
+          telethonAvailable = false
+          console.warn('[uploader] Telethon streaming upload failed, falling back to chunked upload:', msg)
         }
-        console.warn('[uploader] Telethon streaming upload failed, trying chunked upload:', msg)
       }
     }
 
@@ -300,12 +323,20 @@ async function processFile(key: string) {
         const index = pending[cursor++]
         const start = index * partSize
         const blob = file.slice(start, Math.min(start + partSize, file.size))
-        try {
-          await xhrUploadPart(key, activeId, blob, index, controller.signal)
-        } catch (err: any) {
-          if (err?.name === 'AbortError') return
-          lastErr = err
-          return
+        let retries = 2
+        while (retries >= 0 && !controller.signal.aborted) {
+          try {
+            await xhrUploadPart(key, activeId, blob, index, controller.signal)
+            break
+          } catch (err: any) {
+            if (err?.name === 'AbortError') return
+            if (retries === 0) {
+              lastErr = err
+              return
+            }
+            retries--
+            await new Promise(r => setTimeout(r, 1500))
+          }
         }
       }
     })

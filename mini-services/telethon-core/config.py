@@ -1,5 +1,7 @@
 import os
+import sqlite3
 from dataclasses import dataclass
+from typing import Dict, Optional
 
 @dataclass(frozen=True)
 class Settings:
@@ -13,22 +15,91 @@ class Settings:
     max_upload_bytes: int
     port: int
 
+def find_sqlite_path() -> Optional[str]:
+    db_url = os.getenv("DATABASE_URL", "")
+    if db_url:
+        path = db_url.replace("file:", "").split("?")[0]
+        if os.path.isfile(path):
+            return path
+
+    r_path = os.getenv("REALTIME_DB_PATH", "")
+    if r_path and os.path.isfile(r_path):
+        return r_path
+
+    candidates = [
+        "/app/db/custom.db",
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "../../db/custom.db")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "../db/custom.db")),
+        os.path.abspath(os.path.join(os.getcwd(), "db/custom.db")),
+        os.path.abspath(os.path.join(os.getcwd(), "../db/custom.db")),
+        os.path.abspath(os.path.join(os.getcwd(), "custom.db")),
+    ]
+    for c in candidates:
+        if os.path.isfile(c):
+            return c
+    return None
+
+def load_settings_from_db() -> Dict[str, str]:
+    db_path = find_sqlite_path()
+    if not db_path:
+        return {}
+    try:
+        conn = sqlite3.connect(db_path, timeout=5.0)
+        cursor = conn.cursor()
+        cursor.execute("SELECT key, value FROM Setting")
+        rows = cursor.fetchall()
+        conn.close()
+        return {r[0]: str(r[1]) for r in rows if r[0] and r[1] is not None}
+    except Exception as e:
+        print(f"[telethon-core] Warning: Could not read Setting table from {db_path}: {e}")
+        return {}
+
 def get_settings() -> Settings:
-    api_id_raw = os.getenv("TELETHON_API_ID", os.getenv("TELEGRAM_API_ID", "0")).strip()
+    db_settings = load_settings_from_db()
+
+    # Telegram API ID
+    api_id_raw = os.getenv(
+        "TELETHON_API_ID",
+        os.getenv("TELEGRAM_API_ID", db_settings.get("tgApiId", "0"))
+    ).strip()
     try:
         api_id = int(api_id_raw)
     except ValueError:
-        raise ValueError("TELETHON_API_ID must be a valid integer")
+        api_id = 0
 
-    api_hash = os.getenv("TELETHON_API_HASH", os.getenv("TELEGRAM_API_HASH", "")).strip()
-    bot_token = os.getenv("TELETHON_BOT_TOKEN", os.getenv("TELEGRAM_BOT_TOKEN", "")).strip()
-    session_path = os.getenv("TELETHON_SESSION_PATH", "/app/db/telethon.session").strip()
+    # Telegram API Hash
+    api_hash = os.getenv(
+        "TELETHON_API_HASH",
+        os.getenv("TELEGRAM_API_HASH", db_settings.get("tgApiHash", ""))
+    ).strip()
 
-    chat_id_raw = os.getenv("TELETHON_STORAGE_CHAT_ID", os.getenv("TELEGRAM_STORAGE_CHAT_ID", "0")).strip()
+    # Bot Token
+    bot_token = os.getenv(
+        "TELETHON_BOT_TOKEN",
+        os.getenv("TELEGRAM_BOT_TOKEN", db_settings.get("tgBotToken", ""))
+    ).strip()
+
+    # Storage Chat ID
+    chat_id_raw = os.getenv(
+        "TELETHON_STORAGE_CHAT_ID",
+        os.getenv("TELEGRAM_STORAGE_CHAT_ID", db_settings.get("tgStorageChatId", "0"))
+    ).strip()
     try:
         storage_chat_id = int(chat_id_raw)
     except ValueError:
         storage_chat_id = 0
+
+    # Session Path
+    session_path = os.getenv("TELETHON_SESSION_PATH", "").strip()
+    if not session_path:
+        if os.path.isdir("/app/db"):
+            session_path = "/app/db/telethon.session"
+        else:
+            db_path = find_sqlite_path()
+            if db_path:
+                session_path = os.path.join(os.path.dirname(db_path), "telethon.session")
+            else:
+                session_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../db/telethon.session"))
 
     internal_key = os.getenv("TELETHON_INTERNAL_KEY", "vs-telethon-internal-key").strip()
 
@@ -37,10 +108,11 @@ def get_settings() -> Settings:
     except ValueError:
         max_concurrent_uploads = 1
 
+    # 2 GiB = 2,147,483,648 bytes (MTProto file limit)
     try:
-        max_upload_bytes = int(os.getenv("MAX_UPLOAD_BYTES", "2000000000"))
+        max_upload_bytes = int(os.getenv("MAX_UPLOAD_BYTES", db_settings.get("maxFileSize", "2147483648")))
     except ValueError:
-        max_upload_bytes = 2_000_000_000
+        max_upload_bytes = 2_147_483_648
 
     try:
         port = int(os.getenv("TELETHON_PORT", os.getenv("TELETHON_CORE_PORT", "3005")))

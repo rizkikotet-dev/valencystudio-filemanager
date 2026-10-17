@@ -57,4 +57,7 @@ server.log
 .venv
 __pycache__
 *.pyc
+*.session
+*.session-journal
+db/
 .superpowers/

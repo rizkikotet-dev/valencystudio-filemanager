@@ -3,7 +3,7 @@ import os
 from typing import AsyncGenerator, Optional
 from telethon import TelegramClient
 from telethon.tl.types import Message, Document
-from config import Settings
+from config import Settings, get_settings
 from stream_reader import AsyncStreamReader
 
 class TelethonClientManager:
@@ -12,29 +12,47 @@ class TelethonClientManager:
         self.client: Optional[TelegramClient] = None
         self.chat_entity = None
         self._connected = False
+        self._connecting_lock = asyncio.Lock()
         self._semaphore = asyncio.Semaphore(settings.max_concurrent_uploads)
 
+    def reload_settings(self):
+        """Reload configuration from environment / SQLite database."""
+        self.settings = get_settings()
+
     async def start(self):
-        session_dir = os.path.dirname(os.path.abspath(self.settings.session_path))
-        if session_dir:
-            os.makedirs(session_dir, exist_ok=True)
-        self.client = TelegramClient(self.settings.session_path, self.settings.api_id, self.settings.api_hash)
-        await self.client.connect()
+        async with self._connecting_lock:
+            if self._connected and self.client and self.client.is_connected():
+                return
+            if not self.settings.api_id or not self.settings.api_hash:
+                raise RuntimeError("Telegram API ID or Hash not configured.")
 
-        if not await self.client.is_user_authorized():
-            if self.settings.bot_token:
-                await self.client.start(bot_token=self.settings.bot_token)
-            else:
-                raise RuntimeError("Telethon session is not authorized and no bot token was provided.")
+            session_dir = os.path.dirname(os.path.abspath(self.settings.session_path))
+            if session_dir:
+                os.makedirs(session_dir, exist_ok=True)
 
-        if self.settings.storage_chat_id:
-            try:
-                self.chat_entity = await self.client.get_entity(self.settings.storage_chat_id)
-            except Exception as e:
-                print(f"[telethon-core] Warning: Could not resolve storage chat entity ({e}), using raw chat id")
-                self.chat_entity = None
+            if self.client:
+                try:
+                    await self.client.disconnect()
+                except Exception:
+                    pass
 
-        self._connected = True
+            self.client = TelegramClient(self.settings.session_path, self.settings.api_id, self.settings.api_hash)
+            await self.client.connect()
+
+            if not await self.client.is_user_authorized():
+                if self.settings.bot_token:
+                    await self.client.start(bot_token=self.settings.bot_token)
+                else:
+                    raise RuntimeError("Telethon session is not authorized and no bot token was provided.")
+
+            if self.settings.storage_chat_id:
+                try:
+                    self.chat_entity = await self.client.get_entity(self.settings.storage_chat_id)
+                except Exception as e:
+                    print(f"[telethon-core] Warning: Could not resolve storage chat entity ({e}), using raw chat id")
+                    self.chat_entity = None
+
+            self._connected = True
 
     async def stop(self):
         self._connected = False
@@ -42,7 +60,17 @@ class TelethonClientManager:
             await self.client.disconnect()
 
     async def is_healthy(self) -> bool:
-        return self._connected and self.client is not None and self.client.is_connected()
+        if self._connected and self.client is not None and self.client.is_connected():
+            return True
+        # Try on-demand reconnect if credentials exist
+        self.reload_settings()
+        if self.settings.api_id and self.settings.api_hash:
+            try:
+                await self.start()
+                return self._connected and self.client is not None and self.client.is_connected()
+            except Exception as e:
+                print(f"[telethon-core] Auto-reconnect failed: {e}")
+        return False
 
     async def upload_stream(self, reader: AsyncStreamReader, filename: str, mime_type: str, caption: str) -> dict:
         if not await self.is_healthy():
