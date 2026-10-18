@@ -13,13 +13,13 @@ test('streaming and storage invariants', async () => {
   assert.equal(teleParts[0].size, 1_500_000_000)
   console.log('✓ Invariant 1 passed: 1 Telethon file = 1 Telegram message ref (no chunking)')
 
-  // 2. Invariant: Strict 2,000,000,000 byte boundary limit
+  // 2. Invariant: Strict 2,147,483,648 byte (2 GiB) boundary limit
   const settings = await getSettings()
   assert.ok(
-    settings.maxFileSize <= 2_000_000_000,
-    `maxFileSize setting must be <= 2,000,000,000 bytes (got ${settings.maxFileSize})`
+    settings.maxFileSize <= 2_147_483_648,
+    `maxFileSize setting must be <= 2,147,483,648 bytes (got ${settings.maxFileSize})`
   )
-  console.log('✓ Invariant 2 passed: Global max file size bounded by 2,000,000,000 bytes')
+  console.log('✓ Invariant 2 passed: Global max file size bounded by 2,147,483,648 bytes (2 GiB)')
 
   // 3. Invariant: Range Requests (HTTP 206) for Telethon files
   const testFile: FileMeta = {

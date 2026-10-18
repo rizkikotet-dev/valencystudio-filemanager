@@ -7,7 +7,7 @@ class AsyncStreamReader:
     compatible with Telethon's upload_file, enforcing backpressure,
     bounded RAM, incremental SHA-256 calculation, and strict size limits.
     """
-    def __init__(self, stream_gen: AsyncGenerator[bytes, None], total_size: int, max_bytes: int = 2_000_000_000, name: str = "stream"):
+    def __init__(self, stream_gen: AsyncGenerator[bytes, None], total_size: int, max_bytes: int = 2_147_483_648, name: str = "stream"):
         self.stream_gen = stream_gen
         self.total_size = total_size
         self.max_bytes = max_bytes

@@ -19,7 +19,8 @@ def get_client_mgr() -> TelethonClientManager:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: attempt connection if credentials are configured
-    if _settings.api_id and _settings.api_hash:
+    s = _client_mgr.settings
+    if s.api_id and s.api_hash:
         try:
             await _client_mgr.start()
         except Exception as e:
@@ -121,4 +122,5 @@ async def delete_message(
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=_settings.port, log_level="info")
+    s = _client_mgr.settings
+    uvicorn.run("main:app", host="127.0.0.1", port=s.port, log_level="info")

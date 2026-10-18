@@ -213,8 +213,8 @@ let telethonLastCheck = 0
 
 async function checkTelethonAvailable(signal?: AbortSignal): Promise<boolean> {
   const now = Date.now()
-  if (telethonAvailable !== null && now - telethonLastCheck < 30_000) {
-    return telethonAvailable
+  if (telethonAvailable === true && now - telethonLastCheck < 15_000) {
+    return true
   }
   try {
     const res = await fetch('/api/files/upload-stream', { method: 'GET', signal }).then(r => r.json())
@@ -391,7 +391,7 @@ export const useUploadStore = create<UploadState>((set, get) => ({
       progress: 0,
       speed: 0,
       uploadedParts: 0,
-      totalParts: f.size === 0 ? 0 : Math.ceil(f.size / (16 * 1024 * 1024)),
+      totalParts: 1,
     }))
     newFiles.forEach((f, idx) => {
       files.set(items[idx].key, f)

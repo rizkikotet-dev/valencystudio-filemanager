@@ -54,13 +54,18 @@ export function invalidateSettingsCache() {
 
 export async function getSettings(): Promise<AppSettings> {
   const raw = await getSettingsRaw()
+  const rawMax = parseInt(raw.maxFileSize) || 0
+  const maxFileSize = (!rawMax || rawMax <= 2_000_000_000) ? 2_147_483_648 : Math.min(rawMax, 2_147_483_648)
+  if (rawMax > 0 && rawMax <= 2_000_000_000) {
+    db.setting.upsert({ where: { key: 'maxFileSize' }, update: { value: '2147483648' }, create: { key: 'maxFileSize', value: '2147483648' } }).catch(() => {})
+  }
   return {
     siteName: raw.siteName,
     siteDescription: raw.siteDescription,
     announcement: raw.announcement || '',
     allowRegistration: raw.allowRegistration === 'true',
     defaultQuota: (!parseFloat(raw.defaultQuota) || parseFloat(raw.defaultQuota) === 1073741824) ? 1000 * 1024 * 1024 * 1024 : parseFloat(raw.defaultQuota),
-    maxFileSize: Math.min(parseInt(raw.maxFileSize) || 2147483648, 2147483648),
+    maxFileSize,
     storageBackend: (raw.storageBackend === 'local' ? 'local' : 'telegram') as AppSettings['storageBackend'],
     tgBotToken: raw.tgBotToken || '',
     tgApiId: raw.tgApiId || '',

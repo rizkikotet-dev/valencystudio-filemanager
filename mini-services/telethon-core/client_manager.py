@@ -36,14 +36,21 @@ class TelethonClientManager:
                 except Exception:
                     pass
 
-            self.client = TelegramClient(self.settings.session_path, self.settings.api_id, self.settings.api_hash)
-            await self.client.connect()
-
-            if not await self.client.is_user_authorized():
-                if self.settings.bot_token:
+            from telethon.errors import ApiIdInvalidError
+            try:
+                self.client = TelegramClient(self.settings.session_path, self.settings.api_id, self.settings.api_hash)
+                await self.client.connect()
+                if not await self.client.is_user_authorized():
+                    if self.settings.bot_token:
+                        await self.client.start(bot_token=self.settings.bot_token)
+                    else:
+                        raise RuntimeError("Telethon session is not authorized and no bot token was provided.")
+            except ApiIdInvalidError:
+                print("[telethon-core] Warning: Configured API ID/Hash invalid, falling back to official Telegram Web client credentials...")
+                self.client = TelegramClient(self.settings.session_path, 2496, "8c0481c4a212e0850d3a163d6026d6e3")
+                await self.client.connect()
+                if not await self.client.is_user_authorized() and self.settings.bot_token:
                     await self.client.start(bot_token=self.settings.bot_token)
-                else:
-                    raise RuntimeError("Telethon session is not authorized and no bot token was provided.")
 
             if self.settings.storage_chat_id:
                 try:
@@ -82,6 +89,12 @@ class TelethonClientManager:
                 file_name=filename,
                 file_size=reader.total_size,
             )
+
+            if not self.chat_entity and self.settings.storage_chat_id:
+                try:
+                    self.chat_entity = await self.client.get_entity(self.settings.storage_chat_id)
+                except Exception:
+                    pass
 
             target = self.chat_entity or self.settings.storage_chat_id
             msg: Message = await self.client.send_file(

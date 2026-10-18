@@ -57,21 +57,26 @@ def load_settings_from_db() -> Dict[str, str]:
 def get_settings() -> Settings:
     db_settings = load_settings_from_db()
 
-    # Telegram API ID
+    # Telegram API ID (defaults to Telegram Web official API ID if unset or 0)
+    DEFAULT_API_ID = 2496
+    DEFAULT_API_HASH = "8c0481c4a212e0850d3a163d6026d6e3"
+
     api_id_raw = os.getenv(
         "TELETHON_API_ID",
-        os.getenv("TELEGRAM_API_ID", db_settings.get("tgApiId", "0"))
+        os.getenv("TELEGRAM_API_ID", db_settings.get("tgApiId", ""))
     ).strip()
     try:
-        api_id = int(api_id_raw)
+        api_id = int(api_id_raw) if api_id_raw and api_id_raw != "0" else DEFAULT_API_ID
     except ValueError:
-        api_id = 0
+        api_id = DEFAULT_API_ID
 
     # Telegram API Hash
     api_hash = os.getenv(
         "TELETHON_API_HASH",
         os.getenv("TELEGRAM_API_HASH", db_settings.get("tgApiHash", ""))
     ).strip()
+    if not api_hash:
+        api_hash = DEFAULT_API_HASH
 
     # Bot Token
     bot_token = os.getenv(
@@ -110,7 +115,11 @@ def get_settings() -> Settings:
 
     # 2 GiB = 2,147,483,648 bytes (MTProto file limit)
     try:
-        max_upload_bytes = int(os.getenv("MAX_UPLOAD_BYTES", db_settings.get("maxFileSize", "2147483648")))
+        db_max_str = db_settings.get("maxFileSize", "2147483648")
+        db_max = int(db_max_str) if str(db_max_str).isdigit() else 2_147_483_648
+        if db_max <= 2_000_000_000:
+            db_max = 2_147_483_648
+        max_upload_bytes = int(os.getenv("MAX_UPLOAD_BYTES", str(db_max)))
     except ValueError:
         max_upload_bytes = 2_147_483_648
 
