@@ -46,7 +46,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   // rich Telegram caption metadata (uploader, folder, checksum) — only built when the
   // parts are destined for Telegram; the local backend ignores it
   let meta: PartMeta | undefined
-  if (settings.storageBackend === 'telegram' && settings.tgStorageChatId) {
+  // cast to string to avoid a TypeScript control-flow/narrowing false-positive when
+  // earlier branches may have narrowed `settings.storageBackend` to the other literal.
+  if ((settings.storageBackend as string) === 'telegram' && settings.tgStorageChatId) {
     const folderPath = await getFolderPath(file.folderId)
     meta = {
       fileName: file.name,
