@@ -124,6 +124,8 @@ const TYPE_CHIPS = [
   { key: 'code', label: 'Code & Text', icon: Code2 },
 ]
 
+const EMPTY_SELECTION = new Set<string>()
+
 /** Roving-focus navigation for the file browser (grid = 2D, list = 1D) */
 function focusNeighbor(container: HTMLElement, current: HTMLElement | null, dir: 'left' | 'right' | 'up' | 'down') {
   const items = Array.from(container.querySelectorAll<HTMLElement>('[data-kb]'))
@@ -191,8 +193,11 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
     try { localStorage.setItem('vs_view', v) } catch {}
   }
   const view = viewRaw
-  const [selecting, setSelecting] = useState(false)
-  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [selectionState, setSelectionState] = useState<{
+    route: ReturnType<typeof useHashRoute> | null
+    selecting: boolean
+    selected: Set<string>
+  }>({ route: null, selecting: false, selected: EMPTY_SELECTION })
   const [confirmDelete, setConfirmDelete] = useState<FileRow | null>(null)
   const [confirmPurge, setConfirmPurge] = useState<FileRow | FileRow[] | null>(null)
   const [confirmFolderDelete, setConfirmFolderDelete] = useState<FolderRow | null>(null)
@@ -214,17 +219,35 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
   const folderId = mode === 'files' ? route.query.get('folder') : null
   const inFolder = mode === 'files' && !!folderId
   const searchActive = debounced.trim().length > 0
+  const isSelectionForCurrentRoute = selectionState.route === route
+  const selected = isSelectionForCurrentRoute ? selectionState.selected : EMPTY_SELECTION
+  const selecting = isSelectionForCurrentRoute && selectionState.selecting
+  const setSelected = (next: Set<string> | ((previous: Set<string>) => Set<string>)) => {
+    setSelectionState(current => {
+      const isCurrent = current.route === route
+      const currentSelection = isCurrent ? current.selected : EMPTY_SELECTION
+      return {
+        route,
+        selected: typeof next === 'function' ? next(currentSelection) : next,
+        selecting: isCurrent ? current.selecting : false,
+      }
+    })
+  }
+  const setSelecting = (next: boolean | ((previous: boolean) => boolean)) => {
+    setSelectionState(current => {
+      const isCurrent = current.route === route
+      return {
+        route,
+        selected: isCurrent ? current.selected : EMPTY_SELECTION,
+        selecting: typeof next === 'function' ? next(isCurrent && current.selecting) : next,
+      }
+    })
+  }
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search), 300)
     return () => clearTimeout(t)
   }, [search])
-
-  // reset selection when the folder changes
-  useEffect(() => {
-    setSelected(new Set())
-    setSelecting(false)
-  }, [folderId])
 
   // "/" focuses search
   useEffect(() => {
@@ -274,14 +297,17 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
 
   // Deep link: #/files?…&open=<fileId> (from the ⌘K palette) opens the preview once the list loads
   const openParam = route.query.get('open')
-  useEffect(() => {
-    if (mode !== 'files' || isLoading || !openParam) return
-    const target = files.find(f => f.id === openParam)
-    if (target) {
-      setPreviewFile(target)
-      navigate(`/files${folderId ? `?folder=${encodeURIComponent(folderId)}` : ''}`)
-    }
-  }, [openParam, isLoading, mode, folderId])
+  const urlPreviewFile = mode === 'files' && !isLoading && openParam
+    ? files.find(f => f.id === openParam) || null
+    : null
+  const visiblePreviewFile = previewFile || urlPreviewFile
+  const clearOpenParam = () => {
+    if (openParam) navigate(`/files${folderId ? `?folder=${encodeURIComponent(folderId)}` : ''}`)
+  }
+  const openPreview = (file: FileRow) => {
+    setPreviewFile(file)
+    clearOpenParam()
+  }
 
   const invalidate = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['files'] })
@@ -572,7 +598,7 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
 
   const cardHandlers = (f: FileRow) => ({
     onShare: () => setShareFile(f),
-    onPreview: () => setPreviewFile(f),
+    onPreview: () => openPreview(f),
     onDelete: () => setConfirmDelete(f),
     onDownload: () => downloadFile(`/api/files/${f.id}/download`),
     onCopyLink: () => copyShareLink(f),
@@ -674,7 +700,7 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
         navigate(`/files?folder=${encodeURIComponent(itemId)}`)
       } else if (itemFile) {
         if (trashMode) setDetailsFile(itemFile)
-        else setPreviewFile(itemFile)
+        else openPreview(itemFile)
       }
     } else if (e.key === ' ' && itemType === 'file' && !trashMode) {
       e.preventDefault()
@@ -1311,7 +1337,13 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
       </AlertDialog>
 
       <ShareDialog file={shareFile} onClose={() => setShareFile(null)} />
-      <PreviewDialog file={previewFile} onClose={() => setPreviewFile(null)} />
+      <PreviewDialog
+        file={visiblePreviewFile}
+        onClose={() => {
+          setPreviewFile(null)
+          clearOpenParam()
+        }}
+      />
       <RenameDialog file={renameFile} onClose={() => setRenameFile(null)} onRenamed={invalidate} />
       <DetailsDialog file={detailsFile} onClose={() => setDetailsFile(null)} />
       <MoveDialog
