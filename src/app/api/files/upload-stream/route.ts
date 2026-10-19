@@ -4,7 +4,7 @@ import { jsonError } from '@/lib/api-helpers'
 import { getUsedBytes, publicFile } from '@/lib/files'
 import { ownedFolder } from '@/lib/folders'
 import { emitChanged, ROOM } from '@/lib/realtime-emit'
-import { isTelethonHealthy, uploadToTelethon } from '@/lib/telethon'
+import { deleteFromTelethon, isTelethonHealthy, uploadToTelethon } from '@/lib/telethon'
 import { getSettings } from '@/lib/settings'
 
 export const runtime = 'nodejs'
@@ -16,7 +16,7 @@ const MAX_BYTES = 2_147_483_648 // 2 GiB
 export async function GET() {
   const settings = await getSettings()
   const available = await isTelethonHealthy()
-  return Response.json({ ok: true, available, maxFileSize: settings.maxFileSize })
+  return Response.json({ ok: true, available, maxFileSize: settings.maxFileSize, storageBackend: settings.storageBackend })
 }
 
 export async function POST(req: Request) {
@@ -40,6 +40,9 @@ export async function POST(req: Request) {
   }
 
   const settings = await getSettings()
+  if (settings.storageBackend !== 'telegram') {
+    return jsonError('Single-document Telethon streaming is only enabled when Telegram storage is selected.', 409)
+  }
   if (size > settings.maxFileSize) {
     return jsonError(`File exceeds maximum allowed size of ${settings.maxFileSize} bytes.`, 413)
   }
@@ -64,7 +67,7 @@ export async function POST(req: Request) {
 
   // Pre-check Telethon service availability before creating PENDING row
   if (!(await isTelethonHealthy())) {
-    return jsonError('Encrypted cloud streaming service is unavailable. Falling back to chunked upload.', 503)
+    return jsonError('Telethon Core is unavailable. Telegram upload was not split or retried as multipart.', 503)
   }
 
   // Create PENDING file record
@@ -88,6 +91,11 @@ export async function POST(req: Request) {
       size,
       mimeType
     )
+
+    if (uploadedBytes !== size) {
+      await deleteFromTelethon(messageId)
+      throw new Error(`Upload integrity check failed: received ${uploadedBytes} of ${size} expected bytes.`)
+    }
 
     const parts = JSON.stringify([{ ref: `telethon:${messageId}`, size: uploadedBytes }])
 

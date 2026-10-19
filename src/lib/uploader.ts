@@ -209,23 +209,20 @@ function xhrUploadStream(
 }
 
 let telethonAvailable: boolean | null = null
-let telethonLastCheck = 0
-
+let uploadBackend: 'telegram' | 'local' = 'telegram'
 async function checkTelethonAvailable(signal?: AbortSignal): Promise<boolean> {
-  const now = Date.now()
-  if (telethonAvailable === true && now - telethonLastCheck < 15_000) {
-    return true
-  }
+  // Read storage backend for every queued file; do not silently downgrade Telegram uploads.
   try {
-    const res = await fetch('/api/files/upload-stream', { method: 'GET', signal }).then(r => r.json())
-    telethonAvailable = !!res?.available
+    const response = await fetch('/api/files/upload-stream', { method: 'GET', signal })
+    const res = await response.json()
+    uploadBackend = res?.storageBackend === 'local' ? 'local' : 'telegram'
+    telethonAvailable = response.ok && !!res?.available
   } catch {
     telethonAvailable = false
+    uploadBackend = 'telegram'
   }
-  telethonLastCheck = now
   return telethonAvailable
 }
-
 async function processFile(key: string) {
   const file = files.get(key)
   const item = readStore().items.find(i => i.key === key)
@@ -236,31 +233,54 @@ async function processFile(key: string) {
 
   try {
     const folderId = folderTargets.get(key) ?? null
+    const canStream = await checkTelethonAvailable(controller.signal)
 
-    // Try direct Telethon streaming upload first if this is not a resume and Telethon is available
-    if (!item.fileId) {
-      const canStream = await checkTelethonAvailable(controller.signal)
-      if (canStream) {
-        update(key, { status: 'uploading', totalParts: 1, uploadedParts: 0, progress: 0 })
-        try {
-          const streamRes = await xhrUploadStream(key, file, folderId, controller.signal)
-          update(key, { status: 'done', progress: 1, speed: 0, fileId: streamRes.id })
+    if (uploadBackend === 'telegram') {
+      // Telegram storage must create one Telegram document per selected file.
+      // Never fall back to the legacy 16 MiB multipart/one-message-per-part path.
+      if (!canStream) {
+        throw new Error(
+          'Telethon Core is unavailable. Telegram uploads require one document; split-upload fallback is disabled. Check Admin → Storage and the MTProto API credentials.'
+        )
+      }
+
+      // A retry after a lost response may already have completed successfully.
+      if (item.fileId) {
+        const prior = await fetch(`/api/files/${item.fileId}/part`, { signal: controller.signal })
+          .then(response => response.ok ? response.json() : null)
+          .catch(() => null)
+        if (prior?.status === 'READY') {
+          update(key, { status: 'done', progress: 1, speed: 0 })
           onFinished?.(readStore().items.find(i => i.key === key)!)
           return
-        } catch (streamErr: any) {
-          if (streamErr?.name === 'AbortError') throw streamErr
-          const msg = streamErr?.message || ''
-          // Only abort if user storage quota is actually exceeded
-          if (msg.toLowerCase().includes('quota')) {
-            throw streamErr
-          }
-          telethonAvailable = false
-          console.warn('[uploader] Telethon streaming upload failed, falling back to chunked upload:', msg)
         }
+        await fetch(`/api/files/${item.fileId}?permanent=1`, { method: 'DELETE' }).catch(() => {})
+        update(key, { fileId: undefined })
+      }
+
+      update(key, { status: 'uploading', totalParts: 1, uploadedParts: 0, progress: 0 })
+      try {
+        const streamRes = await xhrUploadStream(key, file, folderId, controller.signal)
+        if (typeof streamRes.size === 'number' && streamRes.size !== file.size) {
+          throw new Error(`Integrity check failed: expected ${file.size} bytes, received ${streamRes.size} bytes`)
+        }
+        update(key, {
+          status: 'done', progress: 1, speed: 0,
+          uploadedParts: 1, totalParts: 1, fileId: streamRes.id,
+        })
+        onFinished?.(readStore().items.find(i => i.key === key)!)
+        return
+      } catch (streamErr: any) {
+        if (streamErr?.name === 'AbortError') throw streamErr
+        const msg = streamErr?.message || 'Unknown Telethon error'
+        telethonAvailable = false
+        throw new Error(`Single-document Telethon upload failed: ${msg}. The file was not split into multiple Telegram messages.`)
       }
     }
 
+    // Local storage retains the existing resumable multipart path.
     update(key, { status: 'initializing' })
+
     // resume reuse: retry() keeps item.fileId — reuse the same PENDING row
     // so already-uploaded parts are kept instead of orphaned by a fresh init
     let fileId = item.fileId

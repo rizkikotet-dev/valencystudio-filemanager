@@ -33,6 +33,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (file.ownerId !== session.id) return jsonError('Forbidden', 403)
   if (file.status === 'READY') return Response.json({ ok: true, alreadyDone: true })
 
+  const settings = await getSettings()
+  if (settings.storageBackend === 'telegram') {
+    return jsonError('Telegram storage requires one Telethon document; multipart part uploads are disabled.', 409)
+  }
+
   const expectedTotal = file.size === 0 ? 0 : Math.ceil(file.size / (16 * 1024 * 1024))
   if (index >= expectedTotal) return jsonError('Part index out of range.')
 
@@ -41,7 +46,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   // rich Telegram caption metadata (uploader, folder, checksum) — only built when the
   // parts are destined for Telegram; the local backend ignores it
   let meta: PartMeta | undefined
-  const settings = await getSettings()
   if (settings.storageBackend === 'telegram' && settings.tgStorageChatId) {
     const folderPath = await getFolderPath(file.folderId)
     meta = {

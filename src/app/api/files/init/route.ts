@@ -30,6 +30,9 @@ export async function POST(req: Request) {
   }
 
   const settings = await getSettings()
+  if (settings.storageBackend === 'telegram') {
+    return jsonError('Telegram storage accepts single-document Telethon uploads only; multipart uploads are disabled.', 409)
+  }
   if (size > settings.maxFileSize) {
     return jsonError(`File exceeds the maximum allowed size of ${Math.floor(settings.maxFileSize / 1024 / 1024)} MB.`, 413)
   }
