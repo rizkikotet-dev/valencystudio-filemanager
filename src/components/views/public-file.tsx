@@ -11,7 +11,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Logo } from '@/components/logo'
 import { toast } from 'sonner'
 import {
-  Binary,
   Download,
   Lock,
   Loader2,
@@ -43,70 +42,6 @@ function LiveCounterDot({ active }: { active: boolean }) {
         active ? 'bg-primary scale-125 animate-pulse-dot' : 'bg-muted-foreground/30'
       }`}
     />
-  )
-}
-
-const TEXT_PREVIEW_LIMIT = 512 * 1024 // 512 KB preview cap
-
-/** Fetch-based text preview for the public share page — themed like the in-app one,
- *  avoids the invisible-text bug (iframes inherit `color-scheme: dark` → white text
- *  on the forced white background). */
-function PublicTextPreview({ src, name }: { src: string; name: string }) {
-  const [content, setContent] = useState<string | null>(null)
-  const [truncated, setTruncated] = useState(false)
-  const [failed, setFailed] = useState(false)
-
-  useEffect(() => {
-    let alive = true
-    fetch(src)
-      .then(r => (r.ok ? r.text() : Promise.reject(new Error('Preview failed'))))
-      .then(t => {
-        if (!alive) return
-        if (t.length > TEXT_PREVIEW_LIMIT) {
-          setContent(t.slice(0, TEXT_PREVIEW_LIMIT))
-          setTruncated(true)
-        } else {
-          setContent(t)
-        }
-      })
-      .catch(() => {
-        if (alive) setFailed(true)
-      })
-    return () => {
-      alive = false
-    }
-  }, [src])
-
-  if (failed) {
-    return (
-      <div className="w-full h-[52vh] grid place-items-center text-sm text-muted-foreground">
-        Could not load preview — try downloading the file instead.
-      </div>
-    )
-  }
-  if (content === null) {
-    return (
-      <div className="w-full p-6 space-y-2.5">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className="h-4" style={{ width: `${55 + ((i * 13) % 40)}%` }} />
-        ))}
-      </div>
-    )
-  }
-  return (
-    <div className="relative w-full">
-      <pre
-        className="w-full max-h-[52vh] overflow-auto rounded-lg border border-border/60 bg-zinc-950/60 p-4 text-[12.5px] leading-relaxed font-mono text-foreground/90 whitespace-pre-wrap break-words min-h-60"
-        title={name}
-      >
-        {content}
-      </pre>
-      {truncated && (
-        <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-          <Binary className="size-3.5 shrink-0" /> Preview truncated at 512 KB — download to view the full file.
-        </div>
-      )}
-    </div>
   )
 }
 
@@ -313,13 +248,12 @@ export function PublicFileView({ slug }: { slug: string }) {
                 )}
               </div>
 
-              {isPreviewable(info.mimeType, info.name) && (
+              {isPreviewable(info.mimeType, info.name) && kind !== 'text' && kind !== 'code' && (
                 <div className="bg-muted/30 grid place-items-center p-4 border-b border-border/60">
                   {kind === 'image' && <img src={rawUrl} alt={info.name} className="max-h-[52vh] rounded-lg object-contain" />}
                   {kind === 'video' && <video src={rawUrl} controls preload="metadata" className="max-h-[52vh] w-full rounded-lg" />}
                   {kind === 'audio' && <audio src={rawUrl} controls className="w-full max-w-md" />}
                   {kind === 'pdf' && <iframe src={rawUrl} title={info.name} className="w-full h-[52vh] rounded-lg border-0 bg-white" />}
-                  {kind === 'text' && <PublicTextPreview src={rawUrl} name={info.name} />}
                 </div>
               )}
 

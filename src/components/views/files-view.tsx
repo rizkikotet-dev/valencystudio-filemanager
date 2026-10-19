@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
-import { api, downloadFile, downloadPost } from '@/lib/client-api'
+import { api, downloadFile } from '@/lib/client-api'
 import { formatBytes, formatDate, fileKind, kindColor, statusColor, timeAgo } from '@/lib/format'
 import { navigate, useHashRoute } from '@/lib/router'
 import { Button } from '@/components/ui/button'
@@ -50,7 +50,6 @@ import {
   Info,
   RotateCcw,
   Trash,
-  Archive,
   AlarmClock,
   ListChecks,
   Folder,
@@ -207,8 +206,6 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
   const [folderDialogTarget, setFolderDialogTarget] = useState<FolderRow | null>(null)
   const [folderNameInput, setFolderNameInput] = useState('')
   const [folderColorInput, setFolderColorInput] = useState('')
-  const [zipBusy, setZipBusy] = useState(false)
-  const [folderZipBusy, setFolderZipBusy] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const queryClient = useQueryClient()
@@ -448,34 +445,6 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
       () => toast.success('Share link copied to clipboard'),
       () => toast.error('Could not copy link')
     )
-  }
-
-  const doZipDownload = async () => {
-    const ids = [...selected]
-    if (ids.length === 0) return
-    setZipBusy(true)
-    try {
-      toast.info(`Packing ${ids.length} file${ids.length !== 1 ? 's' : ''} into a ZIP…`)
-      await downloadPost('/api/files/bulk-zip', { ids })
-      toast.success('ZIP archive ready — check your downloads')
-    } catch (e: any) {
-      toast.error(e?.message || 'ZIP download failed')
-    } finally {
-      setZipBusy(false)
-    }
-  }
-
-  const doFolderZip = async (fd: { id: string; name: string }) => {
-    setFolderZipBusy(true)
-    try {
-      toast.info(`Packing "${fd.name}" (with subfolders) into a ZIP…`)
-      await downloadPost(`/api/folders/${fd.id}/zip`, {}, `${fd.name}.zip`)
-      toast.success(`"${fd.name}.zip" ready — check your downloads`)
-    } catch (e: any) {
-      toast.error(e?.message || 'Folder ZIP download failed')
-    } finally {
-      setFolderZipBusy(false)
-    }
   }
 
   // files dragged from a card and dropped onto a folder card
@@ -867,19 +836,6 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
               </div>
             )
           })}
-          {inFolder && breadcrumb.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="ml-auto gap-1.5 h-7 text-xs"
-              disabled={folderZipBusy}
-              onClick={() => doFolderZip(breadcrumb[breadcrumb.length - 1])}
-              title="Download this folder (with subfolders) as a ZIP archive"
-            >
-              {folderZipBusy ? <Loader2 className="size-3.5 animate-spin" /> : <Archive className="size-3.5" />}
-              Download folder ZIP
-            </Button>
-          )}
         </div>
       )}
       {mode === 'files' && searchActive && (
@@ -990,10 +946,6 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
                     Duplicate
                   </Button>
                 )}
-                <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={doZipDownload} disabled={zipBusy}>
-                  {zipBusy ? <Loader2 className="size-3.5 animate-spin" /> : <Archive className="size-3.5" />}
-                  Download ZIP
-                </Button>
                 <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/10" onClick={() => bulkAction('trash')}>
                   <Trash2 className="size-3.5" /> Trash
                 </Button>
@@ -1115,7 +1067,6 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
                         onRename={() => openFolderDialog('rename', fd)}
                         onMove={() => setMoveTarget({ folderId: fd.id, folderName: fd.name })}
                         onDelete={() => setConfirmFolderDelete(fd)}
-                        onZip={() => doFolderZip(fd)}
                         onDropFiles={ids => moveDroppedFiles(ids, fd.id)}
                       />
                     </motion.div>
@@ -1128,7 +1079,6 @@ export function FilesView({ mode = 'files' }: { mode?: FilesMode }) {
                   onRename={fd => openFolderDialog('rename', fd)}
                   onMove={fd => setMoveTarget({ folderId: fd.id, folderName: fd.name })}
                   onDelete={fd => setConfirmFolderDelete(fd)}
-                  onZip={fd => doFolderZip(fd)}
                   onDropFiles={(fd, ids) => moveDroppedFiles(ids, fd.id)}
                 />
               )}
@@ -1662,13 +1612,11 @@ function FolderMenu({
   onRename,
   onMove,
   onDelete,
-  onZip,
 }: {
   folder: FolderRow
   onRename: () => void
   onMove: () => void
   onDelete: () => void
-  onZip: () => void
 }) {
   return (
     <DropdownMenu>
@@ -1689,9 +1637,6 @@ function FolderMenu({
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onMove}>
           <FolderInput className="size-4" /> Move to…
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onZip}>
-          <Archive className="size-4" /> Download as ZIP
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem className="text-red-500 focus:text-red-500" onClick={onDelete}>
@@ -1714,7 +1659,6 @@ function FolderCard({
   onRename,
   onMove,
   onDelete,
-  onZip,
   onDropFiles,
 }: {
   folder: FolderRow
@@ -1722,7 +1666,6 @@ function FolderCard({
   onRename: () => void
   onMove: () => void
   onDelete: () => void
-  onZip: () => void
   onDropFiles?: (ids: string[]) => void
 }) {
   const [dropActive, setDropActive] = useState(false)
@@ -1789,7 +1732,7 @@ function FolderCard({
             {folder.totalSize > 0 ? ` · ${formatBytes(folder.totalSize)}` : ''}
           </div>
         </div>
-        <FolderMenu folder={folder} onRename={onRename} onMove={onMove} onDelete={onDelete} onZip={onZip} />
+        <FolderMenu folder={folder} onRename={onRename} onMove={onMove} onDelete={onDelete} />
       </div>
       <div className="mt-3 text-[11px] text-muted-foreground/60">created {timeAgo(folder.createdAt)}</div>
     </div>
@@ -1802,7 +1745,6 @@ function FolderList({
   onRename,
   onMove,
   onDelete,
-  onZip,
   onDropFiles,
 }: {
   folders: FolderRow[]
@@ -1810,7 +1752,6 @@ function FolderList({
   onRename: (f: FolderRow) => void
   onMove: (f: FolderRow) => void
   onDelete: (f: FolderRow) => void
-  onZip: (f: FolderRow) => void
   onDropFiles?: (f: FolderRow, ids: string[]) => void
 }) {
   return (
@@ -1826,7 +1767,6 @@ function FolderList({
                 onRename={() => onRename(fd)}
                 onMove={() => onMove(fd)}
                 onDelete={() => onDelete(fd)}
-                onZip={() => onZip(fd)}
                 onDropFiles={onDropFiles ? ids => onDropFiles(fd, ids) : undefined}
               />
             ))}
@@ -1843,7 +1783,6 @@ function FolderListRow({
   onRename,
   onMove,
   onDelete,
-  onZip,
   onDropFiles,
 }: {
   folder: FolderRow
@@ -1851,7 +1790,6 @@ function FolderListRow({
   onRename: () => void
   onMove: () => void
   onDelete: () => void
-  onZip: () => void
   onDropFiles?: (ids: string[]) => void
 }) {
   const [dropActive, setDropActive] = useState(false)
@@ -1913,7 +1851,7 @@ function FolderListRow({
       </td>
       <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">created {timeAgo(folder.createdAt)}</td>
       <td className="px-4 py-3 w-10" onClick={e => e.stopPropagation()}>
-        <FolderMenu folder={folder} onRename={onRename} onMove={onMove} onDelete={onDelete} onZip={onZip} />
+        <FolderMenu folder={folder} onRename={onRename} onMove={onMove} onDelete={onDelete} />
       </td>
     </tr>
   )

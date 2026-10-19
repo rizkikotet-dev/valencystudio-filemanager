@@ -36,33 +36,3 @@ export function downloadFile(url: string) {
   a.click()
   a.remove()
 }
-
-/** POST-based download (streams a blob, then triggers a save dialog) */
-export async function downloadPost(url: string, body: unknown, fallbackName = 'download.zip') {
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    cache: 'no-store',
-  })
-  if (!res.ok) {
-    let message = `Download failed (${res.status})`
-    try {
-      const data = await res.json()
-      if (data?.error) message = data.error
-    } catch {}
-    throw new ApiError(message, res.status)
-  }
-  const blob = await res.blob()
-  const dispo = res.headers.get('Content-Disposition') || ''
-  const m = /filename\*=UTF-8''([^;]+)/i.exec(dispo) || /filename="([^"]+)"/i.exec(dispo)
-  const name = m ? decodeURIComponent(m[1]) : fallbackName
-  const objectUrl = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = objectUrl
-  a.download = name
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  setTimeout(() => URL.revokeObjectURL(objectUrl), 30_000)
-}

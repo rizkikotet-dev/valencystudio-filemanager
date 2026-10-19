@@ -44,10 +44,7 @@ function ItemRow({ item }: { item: UploadItem }) {
     switch (item.status) {
       case 'queued': return 'Queued…'
       case 'initializing': return 'Initializing stream…'
-      case 'uploading':
-        return item.totalParts > 1
-          ? `Part ${Math.min(item.uploadedParts + 1, item.totalParts)}/${item.totalParts} · ${formatBytes(item.speed, 0)}/s`
-          : `Streaming · ${formatBytes(item.speed, 0)}/s`
+      case 'uploading': return `Streaming · ${formatBytes(item.speed, 0)}/s`
       case 'finalizing': return 'Indexing in cloud vault…'
       case 'done': return `Completed · ${formatBytes(item.size)}`
       case 'error': return item.error || 'Failed'
